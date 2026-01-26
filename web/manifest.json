@@ -1,6 +1,6 @@
 {
-    "name": "pet_care_app",
-    "short_name": "pet_care_app",
+    "name": "habit_tail",
+    "short_name": "habit_tail",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

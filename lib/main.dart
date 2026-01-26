@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
-import 'package:pet_care_app/models/pet_model.dart';
+import 'package:habit_tail/models/pet_model.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,16 +15,16 @@ Future<void> main() async {
     cacheSizeBytes: -1,
   );
 
-  runApp(const PetCareApp());
+  runApp(const HabitTailApp());
 }
 
-class PetCareApp extends StatelessWidget {
-  const PetCareApp({super.key});
+class HabitTailApp extends StatelessWidget {
+  const HabitTailApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'PetPal Care',
+      title: 'Habit Tail',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -378,7 +378,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PetPal Home'),
+        title: const Text('Habit Tail Home'),
         actions: [
           if (_pendingOperations.isNotEmpty)
             const Padding(

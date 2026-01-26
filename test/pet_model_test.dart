@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pet_care_app/models/pet_model.dart';
+import 'package:habit_tail/models/pet_model.dart';
 
 void main() {
   group('Pet.fromMap', () {

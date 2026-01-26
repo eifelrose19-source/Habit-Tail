@@ -63,7 +63,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1061668468125',
     projectId: 'pet-care-app-aa20e',
     storageBucket: 'pet-care-app-aa20e.firebasestorage.app',
-    iosBundleId: 'com.example.petCareApp',
+    iosBundleId: 'com.example.habit_tail',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -72,7 +72,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1061668468125',
     projectId: 'pet-care-app-aa20e',
     storageBucket: 'pet-care-app-aa20e.firebasestorage.app',
-    iosBundleId: 'com.example.petCareApp',
+    iosBundleId: 'com.example.habit_tail',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
