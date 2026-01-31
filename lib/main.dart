@@ -66,7 +66,7 @@ class PetService {
 
   Stream<QuerySnapshot<Map<String, dynamic>>> streamPets() =>
       _pets.orderBy('name').snapshots();
-
+///Uses a batch to ensure that if we added multiple metadata fields, the write would be automatic.
   Future<void> savePet(Map<String, dynamic> data, {String? docId}) async {
     final batch = FirebaseFirestore.instance.batch();
     if (docId == null) {
@@ -76,6 +76,7 @@ class PetService {
       batch.update(_pets.doc(docId), {
         ...data,
         'updatedAt': FieldValue.serverTimestamp(),
+        //consistency across different time zones and device settings.
       });
     }
     await batch.commit();
@@ -87,13 +88,14 @@ class PetService {
 }
 
 /// STATE MANAGEMENT for pending operations / unsaved changes
+/// Tracks IDs of active Firebase tasks to show a global loading indicator
 class PetState extends ChangeNotifier {
   final Set<String> _pendingOperations = {};
   bool _hasUnsavedChanges = false;
 
   bool get hasUnsavedChanges => _hasUnsavedChanges;
   bool get hasPending => _pendingOperations.isNotEmpty;
-
+//concurrent Firestore writes. The UI will show a loading spinnder as long as the Set is not empty.
   void startOperation(String opId) {
     _pendingOperations.add(opId);
     _hasUnsavedChanges = true;
@@ -240,7 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Listen for app lifecycle changes to warn about unsaved data
+    // Listen for app lifecycle changes to warn about unsaved data to prevent data loss if the user exits while an upload is active.
     _lifecycleObserver = _LifecycleObserver(onPause: _handleAppPause);
     WidgetsBinding.instance.addObserver(_lifecycleObserver);
   }
@@ -273,7 +275,7 @@ class _HomeScreenState extends State<HomeScreen> {
           try {
             await _petService.savePet(data, docId: docId);
             if (!context.mounted) return;
-
+//This prevents deactivated widgets ancestor errors if user navigated away while the database was processing.
             ScaffoldMessenger.of(context).hideCurrentSnackBar();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -398,6 +400,8 @@ class _HomeScreenState extends State<HomeScreen> {
             itemBuilder: (context, index) {
               final doc = docs[index];
               final pet = Pet.fromFirestore(doc);
+              //Keeps the UI logic clean and prevents data field typos from crashing the ListView.
+              //Fallback logic for pets with incomplete data in Firestore
               final name = pet.name.isNotEmpty ? pet.name : 'Unnamed';
               final breed = pet.breed.isNotEmpty ? pet.breed : 'Unknown breed';
               final age = pet.age > 0 ? '${pet.age} yrs' : 'Age unknown';
@@ -517,6 +521,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      //This preserves scroll positions and state when switching tabs so the user doesn't lose their place.
       body: IndexedStack(index: _selectedIndex, children: _pages),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
