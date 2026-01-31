@@ -1,79 +1,231 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'package:habit_tail/models/pet_model.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  // Enhanced offline persistence with caching
-  FirebaseFirestore.instance.settings = Settings(
-    persistenceEnabled: true,
-    // -1 disables cache size limits (unlimited)
-    cacheSizeBytes: -1,
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  runApp(const HabitTailApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => PetState(),
+      child: const MyApp(),
+    ),
+  );
 }
 
-class HabitTailApp extends StatelessWidget {
-  const HabitTailApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Habit Tail',
-      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorSchemeSeed: Colors.teal,
       ),
       home: const MainNavigationScreen(),
     );
   }
 }
 
-class MainNavigationScreen extends StatefulWidget {
-  const MainNavigationScreen({super.key});
+/// MODEL (Pet)
+class Pet {
+  final String id;
+  final String name;
+  final String breed;
+  final int age;
 
-  @override
-  State<MainNavigationScreen> createState() => _MainNavigationScreenState();
-}
+  Pet({
+    required this.id,
+    required this.name,
+    required this.breed,
+    required this.age,
+  });
 
-class _MainNavigationScreenState extends State<MainNavigationScreen> {
-  int _selectedIndex = 0;
-
-  // Use const widgets and lazy initialization for better performance
-  static const List<Widget> _pages = [
-    HomeScreen(),
-    HealthTrackerScreen(),
-    PetProfileScreen(),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(index: _selectedIndex, children: _pages),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) =>
-            setState(() => _selectedIndex = index),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_rounded), label: 'Home'),
-          NavigationDestination(
-            icon: Icon(Icons.health_and_safety_rounded),
-            label: 'Health',
-          ),
-          NavigationDestination(icon: Icon(Icons.pets_rounded), label: 'Pets'),
-        ],
-      ),
+  factory Pet.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data()!;
+    return Pet(
+      id: doc.id,
+      name: data['name'] ?? '',
+      breed: data['breed'] ?? '',
+      age: data['age'] ?? 0,
     );
   }
 }
 
-// Optimized Home Screen with better error handling and performance
+/// SERVICE LAYER for Firestore
+class PetService {
+  final CollectionReference<Map<String, dynamic>> _pets =
+      FirebaseFirestore.instance.collection('pets');
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> streamPets() =>
+      _pets.orderBy('name').snapshots();
+
+  Future<void> savePet(Map<String, dynamic> data, {String? docId}) async {
+    final batch = FirebaseFirestore.instance.batch();
+    if (docId == null) {
+      final newDoc = _pets.doc();
+      batch.set(newDoc, {...data, 'createdAt': FieldValue.serverTimestamp()});
+    } else {
+      batch.update(_pets.doc(docId), {
+        ...data,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+    await batch.commit();
+  }
+
+  Future<void> deletePet(String docId) async {
+    await _pets.doc(docId).delete();
+  }
+}
+
+/// STATE MANAGEMENT for pending operations / unsaved changes
+class PetState extends ChangeNotifier {
+  final Set<String> _pendingOperations = {};
+  bool _hasUnsavedChanges = false;
+
+  bool get hasUnsavedChanges => _hasUnsavedChanges;
+  bool get hasPending => _pendingOperations.isNotEmpty;
+
+  void startOperation(String opId) {
+    _pendingOperations.add(opId);
+    _hasUnsavedChanges = true;
+    notifyListeners();
+  }
+
+  void endOperation(String opId) {
+    _pendingOperations.remove(opId);
+    _hasUnsavedChanges = _pendingOperations.isNotEmpty;
+    notifyListeners();
+  }
+}
+
+/// LIFECYCLE OBSERVER
+class _LifecycleObserver extends WidgetsBindingObserver {
+  final VoidCallback onPause;
+
+  _LifecycleObserver({required this.onPause});
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      onPause();
+    }
+  }
+}
+
+/// PET FORM DIALOG (Reusable)
+class PetFormDialog extends StatefulWidget {
+  final Pet? pet;
+  final Function(Map<String, dynamic>) onSubmit;
+
+  const PetFormDialog({super.key, this.pet, required this.onSubmit});
+
+  @override
+  State<PetFormDialog> createState() => _PetFormDialogState();
+}
+
+class _PetFormDialogState extends State<PetFormDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _nameController;
+  late final TextEditingController _breedController;
+  late final TextEditingController _ageController;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize controllers with existing data or empty strings
+    _nameController = TextEditingController(text: widget.pet?.name ?? '');
+    _breedController = TextEditingController(text: widget.pet?.breed ?? '');
+    _ageController =
+        TextEditingController(text: widget.pet?.age.toString() ?? '');
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _breedController.dispose();
+    _ageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isNew = widget.pet == null;
+
+    return AlertDialog(
+      title: Text(isNew ? 'Add New Pet' : 'Edit ${widget.pet!.name}'),
+      content: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Pet Name Field
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Pet Name',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Please enter a name' : null,
+                textCapitalization: TextCapitalization.words,
+              ),
+              const SizedBox(height: 16),
+              // Breed Field
+              TextFormField(
+                controller: _breedController,
+                decoration: const InputDecoration(
+                  labelText: 'Breed (Optional)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Age Field
+              TextFormField(
+                controller: _ageController,
+                decoration: const InputDecoration(
+                  labelText: 'Age',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.number,
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            if (_formKey.currentState!.validate()) {
+              widget.onSubmit({
+                'name': _nameController.text.trim(),
+                'breed': _breedController.text.trim(),
+                'age': int.tryParse(_ageController.text.trim()) ?? 0,
+              });
+              Navigator.pop(context);
+            }
+          },
+          child: Text(isNew ? 'Add' : 'Update'),
+        ),
+      ],
+    );
+  }
+}
+
+/// HOME SCREEN
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -82,13 +234,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final CollectionReference<Map<String, dynamic>> _pets = FirebaseFirestore
-      .instance
-      .collection('pets');
-
-  // Track pending operations to prevent data loss
-  final Set<String> _pendingOperations = {};
-  bool _hasUnsavedChanges = false;
+  final PetService _petService = PetService();
   late final _LifecycleObserver _lifecycleObserver;
 
   @override
@@ -106,281 +252,90 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _handleAppPause() {
-    if (_hasUnsavedChanges || _pendingOperations.isNotEmpty) {
-      // Show notification that saves are in progress
-      debugPrint('Warning: Operations pending: ${_pendingOperations.length}');
+    final state = context.read<PetState>();
+    if (state.hasUnsavedChanges || state.hasPending) {
+      debugPrint(
+          'Warning: Operations pending: ${state._pendingOperations.length}');
     }
   }
 
-  Future<void> _addOrEditPet(
-    BuildContext context, [
-    DocumentSnapshot<Map<String, dynamic>>? doc,
-  ]) async {
-    final data = doc?.data() ?? <String, dynamic>{};
-
-    final nameController = TextEditingController(
-      text: data['name']?.toString() ?? '',
-    );
-    final breedController = TextEditingController(
-      text: data['breed']?.toString() ?? '',
-    );
-    final ageController = TextEditingController(
-      text: data['age']?.toString() ?? '',
-    );
-
-    final isNew = doc == null;
-
-    final result = await showDialog<Map<String, dynamic>?>(
+  void _showPetForm([Pet? pet, String? docId]) {
+    showDialog(
       context: context,
-      barrierDismissible: false, // Prevent accidental dismissal
-      builder: (context) => AlertDialog(
-        title: Text(isNew ? 'Add Pet' : 'Edit Pet'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  border: OutlineInputBorder(),
-                ),
-                textCapitalization: TextCapitalization.words,
-                autofocus: true,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: breedController,
-                decoration: const InputDecoration(
-                  labelText: 'Breed',
-                  border: OutlineInputBorder(),
-                ),
-                textCapitalization: TextCapitalization.words,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: ageController,
-                decoration: const InputDecoration(
-                  labelText: 'Age',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final name = nameController.text.trim();
-              final breed = breedController.text.trim();
-              final age = int.tryParse(ageController.text.trim()) ?? 0;
+      barrierDismissible: false,
+      builder: (context) => PetFormDialog(
+        pet: pet,
+        onSubmit: (data) async {
+          final state = context.read<PetState>();
+          final opId = DateTime.now().millisecondsSinceEpoch.toString();
+          state.startOperation(opId);
 
-              if (name.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Name is required')),
-                );
-                return;
-              }
+          try {
+            await _petService.savePet(data, docId: docId);
+            if (!context.mounted) return;
 
-              Navigator.of(
-                context,
-              ).pop({'name': name, 'breed': breed, 'age': age});
-            },
-            child: Text(isNew ? 'Add' : 'Save'),
-          ),
-        ],
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                    docId == null ? 'Pet added successfully!' : 'Changes saved!'),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          } catch (e) {
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error saving: ${e.toString()}'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 5),
+                action: SnackBarAction(
+                  label: 'Retry',
+                  textColor: Colors.white,
+                  onPressed: () => _showPetForm(pet, docId),
+                ),
+              ),
+            );
+          } finally {
+            state.endOperation(opId);
+          }
+        },
       ),
     );
-
-    // Handle the save operation with proper error handling
-    if (!context.mounted) return;
-    if (result != null) {
-      await _savePet(context, result, doc?.id, isNew);
-    }
-
-    // Clean up controllers
-    nameController.dispose();
-    breedController.dispose();
-    ageController.dispose();
   }
 
-  Future<void> _savePet(
-    BuildContext context,
-    Map<String, dynamic> data,
-    String? docId,
-    bool isNew,
-  ) async {
-    final operationId = DateTime.now().millisecondsSinceEpoch.toString();
-    _pendingOperations.add(operationId);
-    _hasUnsavedChanges = true;
-
-    // Show loading indicator
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-            const SizedBox(width: 16),
-            Text(isNew ? 'Adding pet...' : 'Saving changes...'),
-          ],
-        ),
-        duration: const Duration(
-          seconds: 30,
-        ), // Long duration for slow connections
-      ),
-    );
+  Future<void> _deletePet(BuildContext context, String docId, String name) async {
+    final state = context.read<PetState>();
+    final opId = DateTime.now().millisecondsSinceEpoch.toString();
+    state.startOperation(opId);
 
     try {
-      // Use WriteBatch for atomic operations and better performance
-      final batch = FirebaseFirestore.instance.batch();
-
-      if (isNew) {
-        final newDoc = _pets.doc(); // Generate ID client-side
-        batch.set(newDoc, {...data, 'createdAt': FieldValue.serverTimestamp()});
-      } else {
-        batch.update(_pets.doc(docId), {
-          ...data,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      }
-
-      // Commit the batch - this will work offline and sync when online
-
-      await batch.commit();
-
+      await _petService.deletePet(docId);
       if (!context.mounted) return;
-
-      _pendingOperations.remove(operationId);
-      _hasUnsavedChanges = _pendingOperations.isNotEmpty;
-
-      // Dismiss loading snackbar
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-
-      // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(isNew ? 'Pet added successfully!' : 'Changes saved!'),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
-        ),
+        SnackBar(content: Text('Deleted $name')),
       );
     } catch (e) {
       if (!context.mounted) return;
-      _pendingOperations.remove(operationId);
-      _hasUnsavedChanges = _pendingOperations.isNotEmpty;
-
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-
-      // Show error with retry option
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error saving: ${e.toString()}'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 5),
-          action: SnackBarAction(
-            label: 'Retry',
-            textColor: Colors.white,
-            onPressed: () => _savePet(context, data, docId, isNew),
-          ),
-        ),
+        SnackBar(content: Text('Error deleting $name: ${e.toString()}')),
       );
-    }
-  }
-
-  Future<void> _deletePet(BuildContext context, String id, String name) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Pet'),
-        content: Text('Are you sure you want to delete $name?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-
-    if (!context.mounted) return;
-    if (confirmed != true) return;
-
-    final operationId = DateTime.now().millisecondsSinceEpoch.toString();
-    _pendingOperations.add(operationId);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Row(
-          children: [
-            SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-            SizedBox(width: 16),
-            Text('Deleting pet...'),
-          ],
-        ),
-      ),
-    );
-
-    try {
-      await _pets.doc(id).delete();
-
-      if (!context.mounted) return;
-
-      _pendingOperations.remove(operationId);
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$name deleted'),
-          backgroundColor: Colors.orange,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    } catch (e) {
-      _pendingOperations.remove(operationId);
-
-      if (!context.mounted) return;
-
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error deleting: ${e.toString()}'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 5),
-          action: SnackBarAction(
-            label: 'Retry',
-            textColor: Colors.white,
-            onPressed: () => _deletePet(context, id, name),
-          ),
-        ),
-      );
+    } finally {
+      state.endOperation(opId);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<PetState>();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Habit Tail Home'),
         actions: [
-          if (_pendingOperations.isNotEmpty)
+          if (state.hasPending)
             const Padding(
               padding: EdgeInsets.all(16.0),
               child: SizedBox(
@@ -392,9 +347,8 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: _pets.orderBy('name').snapshots(),
+        stream: _petService.streamPets(),
         builder: (context, snapshot) {
-          // Enhanced error handling
           if (snapshot.hasError) {
             return Center(
               child: Column(
@@ -413,7 +367,6 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           }
 
-          // Show cached data immediately while loading
           if (snapshot.connectionState == ConnectionState.waiting &&
               !snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -439,10 +392,8 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           }
 
-          // Use ListView.builder with proper keys for better performance
           return ListView.builder(
             itemCount: docs.length,
-            // Add padding for better UX
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemBuilder: (context, index) {
               final doc = docs[index];
@@ -454,17 +405,15 @@ class _HomeScreenState extends State<HomeScreen> {
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 child: ListTile(
-                  key: ValueKey(doc.id), // Add key for better performance
+                  key: ValueKey(doc.id),
                   leading: CircleAvatar(child: Text(name[0].toUpperCase())),
-                  title: Text(
-                    name,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                  title:
+                      Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text('$breed • $age'),
                   trailing: PopupMenuButton<String>(
                     onSelected: (value) {
                       if (value == 'edit') {
-                        _addOrEditPet(context, doc);
+                        _showPetForm(pet, doc.id);
                       } else if (value == 'delete') {
                         _deletePet(context, doc.id, name);
                       }
@@ -499,7 +448,7 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _addOrEditPet(context),
+        onPressed: () => _showPetForm(),
         tooltip: 'Add Pet',
         child: const Icon(Icons.add),
       ),
@@ -507,54 +456,80 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// Lifecycle observer to handle app state changes
-class _LifecycleObserver extends WidgetsBindingObserver {
-  final VoidCallback onPause;
-
-  _LifecycleObserver({required this.onPause});
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused) {
-      onPause();
-    }
-  }
-}
-
+/// HEALTH TRACKER SCREEN
 class HealthTrackerScreen extends StatelessWidget {
   const HealthTrackerScreen({super.key});
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Health Tracker')),
-    body: const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.health_and_safety, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
-          Text('Vaccination logs will appear here.'),
-        ],
-      ),
-    ),
-  );
+        appBar: AppBar(title: const Text('Health Tracker')),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.health_and_safety, size: 64, color: Colors.grey),
+              SizedBox(height: 16),
+              Text('Vaccination logs will appear here.'),
+            ],
+          ),
+        ),
+      );
 }
 
+/// PET PROFILE SCREEN
 class PetProfileScreen extends StatelessWidget {
   const PetProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Pet Profiles')),
-    body: const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.pets, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
-          Text('Add your first pet!'),
+        appBar: AppBar(title: const Text('Pet Profiles')),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.pets, size: 64, color: Colors.grey),
+              SizedBox(height: 16),
+              Text('Add your first pet!'),
+            ],
+          ),
+        ),
+      );
+}
+
+/// MAIN NAVIGATION SCREEN
+class MainNavigationScreen extends StatefulWidget {
+  const MainNavigationScreen({super.key});
+
+  @override
+  State<MainNavigationScreen> createState() => _MainNavigationScreenState();
+}
+
+class _MainNavigationScreenState extends State<MainNavigationScreen> {
+  int _selectedIndex = 0;
+
+  // Pages displayed in IndexedStack for state preservation
+  static const List<Widget> _pages = [
+    HomeScreen(),
+    HealthTrackerScreen(),
+    PetProfileScreen(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: IndexedStack(index: _selectedIndex, children: _pages),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: (index) => setState(() => _selectedIndex = index),
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.home_rounded), label: 'Home'),
+          NavigationDestination(
+            icon: Icon(Icons.health_and_safety_rounded),
+            label: 'Health',
+          ),
+          NavigationDestination(icon: Icon(Icons.pets_rounded), label: 'Pets'),
         ],
       ),
-    ),
-  );
+    );
+  }
 }
