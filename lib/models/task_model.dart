@@ -1,65 +1,101 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class UserModel {
-  final String uid;
-  final String familyID;
-  final String name;
-  final int totalPoints;
-  final String? parentId; // Made nullable
-  final String? childId;  // Made nullable
+class TaskModel {
+  final String taskId;
+  final String createdBy;
+  final String familyId;
+  final String frequency;
+  final int points;
+  final String title;
+  final DateTime? lastCompleted;
 
-  UserModel({
-    required this.uid,
-    required this.familyID,
-    required this.name,
-    required this.totalPoints,
-    this.parentId,
-    this.childId,
+  TaskModel({
+    required this.taskId,
+    required this.createdBy,
+    required this.familyId,
+    required this.frequency,
+    required this.points,
+    required this.title,
+    this.lastCompleted,
   });
 
-  factory UserModel.fromFirestore(Map<String, dynamic> data, String id) {
-    return UserModel(
-      uid: id,
-      familyID: data['family_id'] ?? "",
-      name: data['name'] ?? 'New Member',
-      totalPoints: data['total_points'] ?? 0,
-      parentId: data['parent_id'],
-      childId: data['child_id'],
+  /// Factory constructor using DocumentSnapshot to handle ID and data at once
+  factory TaskModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? {};
+
+    return TaskModel(
+      taskId: doc.id,
+      createdBy: data['Created_by'] ?? "",
+      familyId: data['Family_id'] ?? "",
+      frequency: data['Frequency'] ?? "",
+      points: (data['Points'] as num?)?.toInt() ?? 0,
+      title: data['Title'] ?? "",
+      lastCompleted: (data['last_completed'] as Timestamp?)?.toDate(),
     );
   }
 
-  // Simplified logic: If they have a parentId, they are a child.
-  bool get isChild => parentId != null;
-  bool get isParent => parentId == null;
-}
+  /// Converts model to Map for Firestore using your specific keys
+  Map<String, dynamic> toFirestore() {
+    return {
+      'Created_by': createdBy,
+      'Family_id': familyId,
+      'Frequency': frequency,
+      'Points': points,
+      'Title': title,
+      'last_completed': lastCompleted != null ? Timestamp.fromDate(lastCompleted!) : null,
+    };
+  }
 
-class TaskModel {
-  final String id;
-  final String title;
-  final int points;
-  final String frequency;
-  final DateTime? lastCompleted;
-  final String createdBy;
-
-  TaskModel({
-    required this.id,
-    required this.title,
-    required this.points,
-    required this.frequency,
-    this.lastCompleted,
-    required this.createdBy,
-  });
-
-  factory TaskModel.fromFirestore(Map<String, dynamic> data, String id) {
+  /// Returns a new instance with updated fields for easier state management
+  TaskModel copyWith({
+    String? taskId,
+    String? createdBy,
+    String? familyId,
+    String? frequency,
+    int? points,
+    String? title,
+    DateTime? lastCompleted,
+  }) {
     return TaskModel(
-      id: id,
-      title: data['title'] ?? 'New Task',
-      points: data['points'] ?? 0,
-      frequency: data['frequency'] ?? 'Daily',
-      lastCompleted: data['last_completed'] != null
-          ? (data['last_completed'] as Timestamp).toDate()
-          : null,
-      createdBy: data['created_by'] ?? "",
+      taskId: taskId ?? this.taskId,
+      createdBy: createdBy ?? this.createdBy,
+      familyId: familyId ?? this.familyId,
+      frequency: frequency ?? this.frequency,
+      points: points ?? this.points,
+      title: title ?? this.title,
+      lastCompleted: lastCompleted ?? this.lastCompleted,
     );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is TaskModel &&
+        other.taskId == taskId &&
+        other.createdBy == createdBy &&
+        other.familyId == familyId &&
+        other.frequency == frequency &&
+        other.points == points &&
+        other.title == title &&
+        other.lastCompleted == lastCompleted;
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(
+      taskId,
+      createdBy,
+      familyId,
+      frequency,
+      points,
+      title,
+      lastCompleted,
+    );
+  }
+
+  @override
+  String toString() {
+    return 'TaskModel(taskId: $taskId, createdBy: $createdBy, familyId: $familyId, frequency: $frequency, points: $points, title: $title, lastCompleted: $lastCompleted)';
   }
 }
