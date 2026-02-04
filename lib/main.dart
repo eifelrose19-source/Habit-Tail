@@ -1,8 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // Replaced Provider with Riverpod
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+
+// ==========================================
+// 1. GLOBAL PROVIDERS (The Final Connection)
+// ==========================================
+
+final userProvider = StateNotifierProvider<UserNotifier, UserState>((ref) => UserNotifier());
+final petProvider = StateNotifierProvider<PetNotifier, List<Pet>>((ref) => PetNotifier());
+final taskProvider = StateNotifierProvider<TaskNotifier, List<Task>>((ref) => TaskNotifier());
+
+// ==========================================
+// 2. MAIN ENTRY POINT
+// ==========================================
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,7 +23,6 @@ Future<void> main() async {
   );
 
   runApp(
-    // Riverpod requires ProviderScope at the root
     const ProviderScope(
       child: MyApp(),
     ),
@@ -35,7 +46,56 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// --- MODELS ---
+// ==========================================
+// 3. MODELS (The Blueprints)
+// ==========================================
+
+class UserModel {
+  final String userId;
+  final String childId;
+  final String familyId;
+  final String name;
+  final String parentId;
+  final int totalPoints;
+
+  UserModel({
+    required this.userId,
+    required this.childId,
+    required this.familyId,
+    required this.name,
+    required this.parentId,
+    required this.totalPoints,
+  });
+
+  factory UserModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? {};
+    return UserModel(
+      userId: doc.id,
+      childId: data['Child_id'] ?? "",
+      familyId: data['Family_id'] ?? "",
+      name: data['Name'] ?? "",
+      parentId: data['Parent_id'] ?? "",
+      totalPoints: (data['Total_points'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toFirestore() => {
+    'Child_id': childId,
+    'Family_id': familyId,
+    'Name': name,
+    'Parent_id': parentId,
+    'Total_points': totalPoints,
+  };
+}
+
+class UserState {
+  final UserModel? user;
+  final bool isLoading;
+  const UserState({this.user, this.isLoading = false});
+  UserState copyWith({UserModel? user, bool? isLoading}) => 
+      UserState(user: user ?? this.user, isLoading: isLoading ?? this.isLoading);
+}
+
 class Pet {
   final String id;
   final String name;
@@ -55,166 +115,82 @@ class Pet {
   }
 }
 
-// --- SERVICE LAYER ---
-class PetService {
-  final CollectionReference<Map<String, dynamic>> _pets =
-      FirebaseFirestore.instance.collection('pets');
+class Task {
+  final String id;
+  final String title;
+  final bool isCompleted;
+  final int points;
 
-  Stream<QuerySnapshot<Map<String, dynamic>>> streamPets() =>
-      _pets.orderBy('name').snapshots();
+  Task({required this.id, required this.title, this.isCompleted = false, required this.points});
+
+  factory Task.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return Task(
+      id: doc.id,
+      title: data['title'] ?? '',
+      isCompleted: data['isCompleted'] ?? false,
+      points: data['points'] ?? 0,
+    );
+  }
+}
+
+// ==========================================
+// 4. NOTIFIERS (The Logic Managers)
+// ==========================================
+
+class UserNotifier extends StateNotifier<UserState> {
+  UserNotifier() : super(const UserState());
+  final _db = FirebaseFirestore.instance;
+
+  void watchUser(String uid) {
+    state = state.copyWith(isLoading: true);
+    _db.collection('Users').doc(uid).snapshots().listen((doc) {
+      if (doc.exists) {
+        state = state.copyWith(user: UserModel.fromFirestore(doc), isLoading: false);
+      }
+    });
+  }
+
+  Future<void> addPoints(int points) async {
+    if (state.user == null) return;
+    final newTotal = state.user!.totalPoints + points;
+    await _db.collection('Users').doc(state.user!.userId).update({'Total_points': newTotal});
+  }
+}
+
+class PetNotifier extends StateNotifier<List<Pet>> {
+  PetNotifier() : super([]);
+  final _db = FirebaseFirestore.instance;
+
+  void watchPets() {
+    _db.collection('pets').orderBy('name').snapshots().listen((snapshot) {
+      state = snapshot.docs.map((doc) => Pet.fromFirestore(doc)).toList();
+    });
+  }
 
   Future<void> savePet(Map<String, dynamic> data, {String? docId}) async {
-    final batch = FirebaseFirestore.instance.batch();
     if (docId == null) {
-      final newDoc = _pets.doc();
-      batch.set(newDoc, {...data, 'createdAt': FieldValue.serverTimestamp()});
+      await _db.collection('pets').add({...data, 'createdAt': FieldValue.serverTimestamp()});
     } else {
-      batch.update(_pets.doc(docId), {
-        ...data,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      await _db.collection('pets').doc(docId).update({...data, 'updatedAt': FieldValue.serverTimestamp()});
     }
-    await batch.commit();
-  }
-
-  Future<void> deletePet(String docId) async {
-    await _pets.doc(docId).delete();
   }
 }
 
-// --- RIVERPOD STATE MANAGEMENT ---
+class TaskNotifier extends StateNotifier<List<Task>> {
+  TaskNotifier() : super([]);
+  final _db = FirebaseFirestore.instance;
 
-// This replaces your PetState class
-class PetOperationState {
-  final Set<String> pendingOperations;
-  final bool hasUnsavedChanges;
-
-  PetOperationState({
-    this.pendingOperations = const {},
-    this.hasUnsavedChanges = false,
-  });
-
-  bool get hasPending => pendingOperations.isNotEmpty;
-
-  PetOperationState copyWith({Set<String>? pendingOperations, bool? hasUnsavedChanges}) {
-    return PetOperationState(
-      pendingOperations: pendingOperations ?? this.pendingOperations,
-      hasUnsavedChanges: hasUnsavedChanges ?? this.hasUnsavedChanges,
-    );
+  void watchTasks() {
+    _db.collection('tasks').snapshots().listen((snapshot) {
+      state = snapshot.docs.map((doc) => Task.fromFirestore(doc)).toList();
+    });
   }
 }
 
-class PetNotifier extends StateNotifier<PetOperationState> {
-  PetNotifier() : super(PetOperationState());
-
-  void startOperation(String opId) {
-    final newSet = Set<String>.from(state.pendingOperations)..add(opId);
-    state = state.copyWith(pendingOperations: newSet, hasUnsavedChanges: true);
-  }
-
-  void endOperation(String opId) {
-    final newSet = Set<String>.from(state.pendingOperations)..remove(opId);
-    state = state.copyWith(
-      pendingOperations: newSet,
-      hasUnsavedChanges: newSet.isNotEmpty,
-    );
-  }
-}
-
-// The global provider
-final petProvider = StateNotifierProvider<PetNotifier, PetOperationState>((ref) {
-  return PetNotifier();
-});
-
-// --- UI COMPONENTS ---
-
-class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({super.key});
-
-  @override
-  ConsumerState<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends ConsumerState<HomeScreen> {
-  final PetService _petService = PetService();
-
-  void _showPetForm([Pet? pet, String? docId]) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => PetFormDialog(
-        pet: pet,
-        onSubmit: (data) async {
-          final opId = DateTime.now().millisecondsSinceEpoch.toString();
-          ref.read(petProvider.notifier).startOperation(opId);
-
-          try {
-            await _petService.savePet(data, docId: docId);
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Success!'), backgroundColor: Colors.green),
-            );
-          } catch (e) {
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-            );
-          } finally {
-            ref.read(petProvider.notifier).endOperation(opId);
-          }
-        },
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Watch the riverpod state
-    final petState = ref.watch(petProvider);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Habit Tail Home'),
-        actions: [
-          if (petState.hasPending)
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: SizedBox(
-                width: 20, height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            ),
-        ],
-      ),
-      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: _petService.streamPets(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final docs = snapshot.data?.docs ?? [];
-          return ListView.builder(
-            itemCount: docs.length,
-            itemBuilder: (context, index) {
-              final pet = Pet.fromFirestore(docs[index]);
-              return ListTile(
-                title: Text(pet.name),
-                subtitle: Text(pet.breed),
-                onTap: () => _showPetForm(pet, docs[index].id),
-              );
-            },
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showPetForm(),
-        child: const Icon(Icons.add),
-      ),
-    );
-  }
-}
-
-// (Rest of your screens: HealthTrackerScreen, PetProfileScreen, PetFormDialog, MainNavigationScreen remain largely the same, but change MainNavigationScreen to ConsumerStatefulWidget if it needs the provider)
+// ==========================================
+// 5. UI COMPONENTS & NAVIGATION
+// ==========================================
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -244,7 +220,63 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 }
 
-// REUSABLE FORM DIALOG
+class HomeScreen extends ConsumerWidget {
+  const HomeScreen({super.key});
+
+  void _showPetForm(BuildContext context, WidgetRef ref, [Pet? pet, String? docId]) {
+    showDialog(
+      context: context,
+      builder: (context) => PetFormDialog(
+        pet: pet,
+        onSubmit: (data) => ref.read(petProvider.notifier).savePet(data, docId: docId),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pets = ref.watch(petProvider);
+    final userState = ref.watch(userProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(userState.user?.name ?? 'Habit Tail Home'),
+        actions: [
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 16.0),
+              child: Text(
+                'Points: ${userState.user?.totalPoints ?? 0}',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
+          ),
+        ],
+      ),
+      body: pets.isEmpty 
+          ? const Center(child: Text("No pets found. Add one!"))
+          : ListView.builder(
+              itemCount: pets.length,
+              itemBuilder: (context, index) {
+                final pet = pets[index];
+                return ListTile(
+                  leading: const CircleAvatar(child: Icon(Icons.pets)),
+                  title: Text(pet.name),
+                  subtitle: Text(pet.breed),
+                  onTap: () => _showPetForm(context, ref, pet, pet.id),
+                );
+              },
+            ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showPetForm(context, ref),
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+// --- REUSABLE DIALOGS & PLACEHOLDERS ---
+
 class PetFormDialog extends StatefulWidget {
   final Pet? pet;
   final Function(Map<String, dynamic>) onSubmit;
@@ -255,7 +287,6 @@ class PetFormDialog extends StatefulWidget {
 }
 
 class _PetFormDialogState extends State<PetFormDialog> {
-  final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _breedController;
   late TextEditingController _ageController;
@@ -272,16 +303,13 @@ class _PetFormDialogState extends State<PetFormDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(widget.pet == null ? 'Add Pet' : 'Edit Pet'),
-      content: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(controller: _nameController, decoration: const InputDecoration(labelText: 'Name')),
-            TextFormField(controller: _breedController, decoration: const InputDecoration(labelText: 'Breed')),
-            TextFormField(controller: _ageController, decoration: const InputDecoration(labelText: 'Age'), keyboardType: TextInputType.number),
-          ],
-        ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Name')),
+          TextField(controller: _breedController, decoration: const InputDecoration(labelText: 'Breed')),
+          TextField(controller: _ageController, decoration: const InputDecoration(labelText: 'Age'), keyboardType: TextInputType.number),
+        ],
       ),
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
@@ -301,5 +329,5 @@ class _PetFormDialogState extends State<PetFormDialog> {
   }
 }
 
-class HealthTrackerScreen extends StatelessWidget { const HealthTrackerScreen({super.key}); @override Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('Health Tracker'))); }
-class PetProfileScreen extends StatelessWidget { const PetProfileScreen({super.key}); @override Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('Pet Profiles'))); }
+class HealthTrackerScreen extends StatelessWidget { const HealthTrackerScreen({super.key}); @override Widget build(BuildContext context) => const Center(child: Text('Health Tracker Screen')); }
+class PetProfileScreen extends StatelessWidget { const PetProfileScreen({super.key}); @override Widget build(BuildContext context) => const Center(child: Text('Pet Profile Screen')); }
