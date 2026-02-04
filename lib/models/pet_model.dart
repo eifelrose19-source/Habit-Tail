@@ -95,10 +95,11 @@ class PetModel {
   factory PetModel.fromMap(Map<String, dynamic> map, String id) {
     final rawAge = map['Age'] ?? map['age'];
     int parsedAge = 0;
-    if (rawAge is num)
+    if (rawAge is num) {
       parsedAge = rawAge.toInt();
-    else if (rawAge is String)
+    } else if (rawAge is String) {
       parsedAge = int.tryParse(rawAge) ?? 0;
+    }
 
     return PetModel(
       petId: id,
