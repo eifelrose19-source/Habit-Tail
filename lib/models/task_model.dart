@@ -1,44 +1,65 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class TaskModel {
+class UserModel {
   final String uid;
   final String familyID;
   final String name;
   final int totalPoints;
-  final String parentId;
-  final String childId; 
+  final String? parentId; // Made nullable
+  final String? childId;  // Made nullable
 
-  TaskModel({
+  UserModel({
     required this.uid,
     required this.familyID,
     required this.name,
     required this.totalPoints,
-    required this.parentId,
-    required this.childId,
-  }); 
+    this.parentId,
+    this.childId,
+  });
 
- 
-  factory TaskModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data() ?? <String, dynamic>{};
-    return TaskModel.fromMap(doc.id, data);
-  }
-
-  factory TaskModel.fromMap(String id, Map<String, dynamic> data) {
-    return TaskModel(
-      uid: id, 
-      name: data['name'] as String? ?? '',
-      familyID: data['familyID'] as String? ?? '', 
-      totalPoints: (data['totalPoints'] as num?)?.toInt() ?? 0, // Handles both int and double from Firestore
-      parentId: data['parentId'] as String? ?? '',
-      childId: data['childId'] as String? ?? '',
+  factory UserModel.fromFirestore(Map<String, dynamic> data, String id) {
+    return UserModel(
+      uid: id,
+      familyID: data['family_id'] ?? "",
+      name: data['name'] ?? 'New Member',
+      totalPoints: data['total_points'] ?? 0,
+      parentId: data['parent_id'],
+      childId: data['child_id'],
     );
   }
 
-  Map<String, dynamic> toMap() => {
-    'name': name,
-    'familyID': familyID,
-    'totalPoints': totalPoints,
-    'parentId': parentId,
-    'childId': childId,
-  };
+  // Simplified logic: If they have a parentId, they are a child.
+  bool get isChild => parentId != null;
+  bool get isParent => parentId == null;
+}
+
+class TaskModel {
+  final String id;
+  final String title;
+  final int points;
+  final String frequency;
+  final DateTime? lastCompleted;
+  final String createdBy;
+
+  TaskModel({
+    required this.id,
+    required this.title,
+    required this.points,
+    required this.frequency,
+    this.lastCompleted,
+    required this.createdBy,
+  });
+
+  factory TaskModel.fromFirestore(Map<String, dynamic> data, String id) {
+    return TaskModel(
+      id: id,
+      title: data['title'] ?? 'New Task',
+      points: data['points'] ?? 0,
+      frequency: data['frequency'] ?? 'Daily',
+      lastCompleted: data['last_completed'] != null
+          ? (data['last_completed'] as Timestamp).toDate()
+          : null,
+      createdBy: data['created_by'] ?? "",
+    );
+  }
 }
