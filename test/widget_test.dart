@@ -12,7 +12,11 @@ import 'package:flutter/material.dart';
 
 void main() {
   testWidgets('App builds and shows home', (WidgetTester tester) async {
-    await tester.pumpWidget(const MaterialApp(home: Scaffold(body: Center(child: Text('test-ready')))));
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: Center(child: Text('test-ready'))),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('test-ready'), findsOneWidget);
   });

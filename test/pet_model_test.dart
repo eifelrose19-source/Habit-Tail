@@ -23,10 +23,7 @@ void main() {
     });
 
     test('handles age as string', () {
-      final map = {
-        'name': 'Milo',
-        'age': '4',
-      };
+      final map = {'name': 'Milo', 'age': '4'};
 
       final pet = Pet.fromMap('id2', map);
 

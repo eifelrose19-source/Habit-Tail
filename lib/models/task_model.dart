@@ -42,7 +42,9 @@ class TaskModel {
       'Frequency': frequency,
       'Points': points,
       'Title': title,
-      'last_completed': lastCompleted != null ? Timestamp.fromDate(lastCompleted!) : null,
+      'last_completed': lastCompleted != null
+          ? Timestamp.fromDate(lastCompleted!)
+          : null,
     };
   }
 
@@ -108,7 +110,9 @@ class TaskModel {
       frequency: map['Frequency'] ?? "",
       points: (map['Points'] is num) ? (map['Points'] as num).toInt() : 0,
       title: map['Title'] ?? map['title'] ?? "",
-      lastCompleted: map['last_completed'] is Timestamp ? (map['last_completed'] as Timestamp).toDate() : null,
+      lastCompleted: map['last_completed'] is Timestamp
+          ? (map['last_completed'] as Timestamp).toDate()
+          : null,
     );
   }
 }

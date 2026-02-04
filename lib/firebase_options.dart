@@ -83,5 +83,4 @@ class DefaultFirebaseOptions {
     authDomain: 'pet-care-app-aa20e.firebaseapp.com',
     storageBucket: 'pet-care-app-aa20e.firebasestorage.app',
   );
-
 }

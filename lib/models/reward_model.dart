@@ -14,14 +14,17 @@ class RewardModel {
   });
 
   /// Factory constructor using DocumentSnapshot to handle ID and data at once
-  factory RewardModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory RewardModel.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
     final data = doc.data() ?? {};
 
     return RewardModel(
       rewardId: doc.id,
       claimedBy: data['Claimed_by'] ?? "",
       // Safely converts Firestore Timestamp to Dart DateTime
-      rewardTimestamp: (data['Reward_Timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      rewardTimestamp:
+          (data['Reward_Timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       status: data['Status'] ?? "",
     );
   }
@@ -63,12 +66,7 @@ class RewardModel {
 
   @override
   int get hashCode {
-    return Object.hash(
-      rewardId,
-      claimedBy,
-      rewardTimestamp,
-      status,
-    );
+    return Object.hash(rewardId, claimedBy, rewardTimestamp, status);
   }
 
   @override

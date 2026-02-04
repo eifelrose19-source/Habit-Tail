@@ -62,7 +62,9 @@ class PetVetInfoModel {
   });
 
   /// Factory constructor using DocumentSnapshot to handle ID and data at once
-  factory PetVetInfoModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory PetVetInfoModel.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
     final data = doc.data() ?? {};
 
     return PetVetInfoModel(

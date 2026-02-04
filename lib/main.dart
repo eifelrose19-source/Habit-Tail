@@ -8,9 +8,15 @@ import 'firebase_options.dart';
 // 1. GLOBAL PROVIDERS (The Final Connection)
 // ==========================================
 
-final userProvider = StateNotifierProvider<UserNotifier, UserState>((ref) => UserNotifier());
-final petProvider = StateNotifierProvider<PetNotifier, List<Pet>>((ref) => PetNotifier());
-final taskProvider = StateNotifierProvider<TaskNotifier, List<Task>>((ref) => TaskNotifier());
+final userProvider = StateNotifierProvider<UserNotifier, UserState>(
+  (ref) => UserNotifier(),
+);
+final petProvider = StateNotifierProvider<PetNotifier, List<Pet>>(
+  (ref) => PetNotifier(),
+);
+final taskProvider = StateNotifierProvider<TaskNotifier, List<Task>>(
+  (ref) => TaskNotifier(),
+);
 
 // ==========================================
 // 2. MAIN ENTRY POINT
@@ -18,15 +24,9 @@ final taskProvider = StateNotifierProvider<TaskNotifier, List<Task>>((ref) => Ta
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  runApp(
-    const ProviderScope(
-      child: MyApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -37,10 +37,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Habit Tail',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: Colors.teal,
-      ),
+      theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.teal),
       home: const MainNavigationScreen(),
     );
   }
@@ -92,8 +89,10 @@ class UserState {
   final UserModel? user;
   final bool isLoading;
   const UserState({this.user, this.isLoading = false});
-  UserState copyWith({UserModel? user, bool? isLoading}) => 
-      UserState(user: user ?? this.user, isLoading: isLoading ?? this.isLoading);
+  UserState copyWith({UserModel? user, bool? isLoading}) => UserState(
+    user: user ?? this.user,
+    isLoading: isLoading ?? this.isLoading,
+  );
 }
 
 class Pet {
@@ -102,7 +101,12 @@ class Pet {
   final String breed;
   final int age;
 
-  Pet({required this.id, required this.name, required this.breed, required this.age});
+  Pet({
+    required this.id,
+    required this.name,
+    required this.breed,
+    required this.age,
+  });
 
   factory Pet.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data()!;
@@ -121,7 +125,12 @@ class Task {
   final bool isCompleted;
   final int points;
 
-  Task({required this.id, required this.title, this.isCompleted = false, required this.points});
+  Task({
+    required this.id,
+    required this.title,
+    this.isCompleted = false,
+    required this.points,
+  });
 
   factory Task.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
@@ -146,7 +155,10 @@ class UserNotifier extends StateNotifier<UserState> {
     state = state.copyWith(isLoading: true);
     _db.collection('Users').doc(uid).snapshots().listen((doc) {
       if (doc.exists) {
-        state = state.copyWith(user: UserModel.fromFirestore(doc), isLoading: false);
+        state = state.copyWith(
+          user: UserModel.fromFirestore(doc),
+          isLoading: false,
+        );
       }
     });
   }
@@ -154,7 +166,9 @@ class UserNotifier extends StateNotifier<UserState> {
   Future<void> addPoints(int points) async {
     if (state.user == null) return;
     final newTotal = state.user!.totalPoints + points;
-    await _db.collection('Users').doc(state.user!.userId).update({'Total_points': newTotal});
+    await _db.collection('Users').doc(state.user!.userId).update({
+      'Total_points': newTotal,
+    });
   }
 }
 
@@ -170,9 +184,15 @@ class PetNotifier extends StateNotifier<List<Pet>> {
 
   Future<void> savePet(Map<String, dynamic> data, {String? docId}) async {
     if (docId == null) {
-      await _db.collection('pets').add({...data, 'createdAt': FieldValue.serverTimestamp()});
+      await _db.collection('pets').add({
+        ...data,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
     } else {
-      await _db.collection('pets').doc(docId).update({...data, 'updatedAt': FieldValue.serverTimestamp()});
+      await _db.collection('pets').doc(docId).update({
+        ...data,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
     }
   }
 }
@@ -201,7 +221,11 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
-  static const List<Widget> _pages = [HomeScreen(), HealthTrackerScreen(), PetProfileScreen()];
+  static const List<Widget> _pages = [
+    HomeScreen(),
+    HealthTrackerScreen(),
+    PetProfileScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -209,10 +233,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       body: IndexedStack(index: _selectedIndex, children: _pages),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) => setState(() => _selectedIndex = index),
+        onDestinationSelected: (index) =>
+            setState(() => _selectedIndex = index),
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_rounded), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.health_and_safety_rounded), label: 'Health'),
+          NavigationDestination(
+            icon: Icon(Icons.health_and_safety_rounded),
+            label: 'Health',
+          ),
           NavigationDestination(icon: Icon(Icons.pets_rounded), label: 'Pets'),
         ],
       ),
@@ -223,12 +251,18 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
-  void _showPetForm(BuildContext context, WidgetRef ref, [Pet? pet, String? docId]) {
+  void _showPetForm(
+    BuildContext context,
+    WidgetRef ref, [
+    Pet? pet,
+    String? docId,
+  ]) {
     showDialog(
       context: context,
       builder: (context) => PetFormDialog(
         pet: pet,
-        onSubmit: (data) => ref.read(petProvider.notifier).savePet(data, docId: docId),
+        onSubmit: (data) =>
+            ref.read(petProvider.notifier).savePet(data, docId: docId),
       ),
     );
   }
@@ -247,13 +281,16 @@ class HomeScreen extends ConsumerWidget {
               padding: const EdgeInsets.only(right: 16.0),
               child: Text(
                 'Points: ${userState.user?.totalPoints ?? 0}',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
             ),
           ),
         ],
       ),
-      body: pets.isEmpty 
+      body: pets.isEmpty
           ? const Center(child: Text("No pets found. Add one!"))
           : ListView.builder(
               itemCount: pets.length,
@@ -296,7 +333,9 @@ class _PetFormDialogState extends State<PetFormDialog> {
     super.initState();
     _nameController = TextEditingController(text: widget.pet?.name ?? '');
     _breedController = TextEditingController(text: widget.pet?.breed ?? '');
-    _ageController = TextEditingController(text: widget.pet?.age.toString() ?? '');
+    _ageController = TextEditingController(
+      text: widget.pet?.age.toString() ?? '',
+    );
   }
 
   @override
@@ -306,13 +345,26 @@ class _PetFormDialogState extends State<PetFormDialog> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Name')),
-          TextField(controller: _breedController, decoration: const InputDecoration(labelText: 'Breed')),
-          TextField(controller: _ageController, decoration: const InputDecoration(labelText: 'Age'), keyboardType: TextInputType.number),
+          TextField(
+            controller: _nameController,
+            decoration: const InputDecoration(labelText: 'Name'),
+          ),
+          TextField(
+            controller: _breedController,
+            decoration: const InputDecoration(labelText: 'Breed'),
+          ),
+          TextField(
+            controller: _ageController,
+            decoration: const InputDecoration(labelText: 'Age'),
+            keyboardType: TextInputType.number,
+          ),
         ],
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
         ElevatedButton(
           onPressed: () {
             widget.onSubmit({
@@ -329,5 +381,16 @@ class _PetFormDialogState extends State<PetFormDialog> {
   }
 }
 
-class HealthTrackerScreen extends StatelessWidget { const HealthTrackerScreen({super.key}); @override Widget build(BuildContext context) => const Center(child: Text('Health Tracker Screen')); }
-class PetProfileScreen extends StatelessWidget { const PetProfileScreen({super.key}); @override Widget build(BuildContext context) => const Center(child: Text('Pet Profile Screen')); }
+class HealthTrackerScreen extends StatelessWidget {
+  const HealthTrackerScreen({super.key});
+  @override
+  Widget build(BuildContext context) =>
+      const Center(child: Text('Health Tracker Screen'));
+}
+
+class PetProfileScreen extends StatelessWidget {
+  const PetProfileScreen({super.key});
+  @override
+  Widget build(BuildContext context) =>
+      const Center(child: Text('Pet Profile Screen'));
+}

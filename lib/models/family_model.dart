@@ -18,7 +18,9 @@ class FamilyModel {
 
   /// Factory constructor using DocumentSnapshot with PascalCase database keys
   /// Updated to use generic DocumentSnapshot to support various Firestore types
-  factory FamilyModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory FamilyModel.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
     final data = doc.data() ?? {};
 
     return FamilyModel(
@@ -35,8 +37,10 @@ class FamilyModel {
   Map<String, dynamic> toFirestore() {
     return {
       'Admin_uid': adminUid,
-      'Family_id': familyId, 
-      'Created_at': createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
+      'Family_id': familyId,
+      'Created_at': createdAt != null
+          ? Timestamp.fromDate(createdAt!)
+          : FieldValue.serverTimestamp(),
       'Subscription_level': subscriptionLevel,
       'member_ids': memberIds,
     };
@@ -62,7 +66,7 @@ class FamilyModel {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    
+
     return other is FamilyModel &&
         other.familyId == familyId &&
         other.adminUid == adminUid &&

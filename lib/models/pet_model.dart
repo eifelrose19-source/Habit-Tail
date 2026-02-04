@@ -83,15 +83,7 @@ class PetModel {
 
   @override
   int get hashCode {
-    return Object.hash(
-      petId,
-      familyId,
-      name,
-      breed,
-      gender,
-      age,
-      type,
-    );
+    return Object.hash(petId, familyId, name, breed, gender, age, type);
   }
 
   @override
@@ -103,8 +95,10 @@ class PetModel {
   factory PetModel.fromMap(Map<String, dynamic> map, String id) {
     final rawAge = map['Age'] ?? map['age'];
     int parsedAge = 0;
-    if (rawAge is num) parsedAge = rawAge.toInt();
-    else if (rawAge is String) parsedAge = int.tryParse(rawAge) ?? 0;
+    if (rawAge is num)
+      parsedAge = rawAge.toInt();
+    else if (rawAge is String)
+      parsedAge = int.tryParse(rawAge) ?? 0;
 
     return PetModel(
       petId: id,
@@ -133,10 +127,24 @@ class Pet {
   final int age;
   final String type;
 
-  Pet({required this.id, required this.name, required this.breed, required this.gender, required this.age, required this.type});
+  Pet({
+    required this.id,
+    required this.name,
+    required this.breed,
+    required this.gender,
+    required this.age,
+    required this.type,
+  });
 
   factory Pet.fromMap(String id, Map<String, dynamic> map) {
     final model = PetModel.fromMap(map, id);
-    return Pet(id: model.petId, name: model.name, breed: model.breed, gender: model.gender, age: model.age, type: model.type);
+    return Pet(
+      id: model.petId,
+      name: model.name,
+      breed: model.breed,
+      gender: model.gender,
+      age: model.age,
+      type: model.type,
+    );
   }
 }

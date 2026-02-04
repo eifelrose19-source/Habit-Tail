@@ -6,9 +6,12 @@ class TaskRepository {
 
   Stream<List<TaskModel>> watchTasks(String familyId) {
     return _service.getTaskStream(familyId).map((snapshot) {
-      return snapshot.docs.map((doc) => 
-        TaskModel.fromMap(doc.data() as Map<String, dynamic>, doc.id)
-      ).toList();
+      return snapshot.docs
+          .map(
+            (doc) =>
+                TaskModel.fromMap(doc.data() as Map<String, dynamic>, doc.id),
+          )
+          .toList();
     });
   }
 }

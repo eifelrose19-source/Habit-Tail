@@ -76,14 +76,7 @@ class UserModel {
 
   @override
   int get hashCode {
-    return Object.hash(
-      userId,
-      childId,
-      familyId,
-      name,
-      parentId,
-      totalPoints,
-    );
+    return Object.hash(userId, childId, familyId, name, parentId, totalPoints);
   }
 
   @override
