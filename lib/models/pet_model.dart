@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 
 class PetModel {
   final String petId; // Document ID
@@ -98,5 +97,46 @@ class PetModel {
   @override
   String toString() {
     return 'PetModel(petId: $petId, familyId: $familyId, name: $name, breed: $breed, gender: $gender, age: $age, type: $type)';
+  }
+
+  /// Compatibility factory used by older repositories expecting `fromMap`
+  factory PetModel.fromMap(Map<String, dynamic> map, String id) {
+    final rawAge = map['Age'] ?? map['age'];
+    int parsedAge = 0;
+    if (rawAge is num) parsedAge = rawAge.toInt();
+    else if (rawAge is String) parsedAge = int.tryParse(rawAge) ?? 0;
+
+    return PetModel(
+      petId: id,
+      familyId: map['Family_id'] ?? "",
+      name: map['Name'] ?? map['name'] ?? "",
+      breed: map['Breed'] ?? map['breed'] ?? "",
+      gender: map['Gender'] ?? map['gender'] ?? "",
+      age: parsedAge,
+      type: map['Type'] ?? map['type'] ?? "",
+    );
+  }
+}
+
+extension PetModelCompat on PetModel {
+  String get id => petId;
+
+  Map<String, dynamic> toMap() => toFirestore();
+}
+
+/// Backwards-compatible `Pet` shape used by older tests and code.
+class Pet {
+  final String id;
+  final String name;
+  final String breed;
+  final String gender;
+  final int age;
+  final String type;
+
+  Pet({required this.id, required this.name, required this.breed, required this.gender, required this.age, required this.type});
+
+  factory Pet.fromMap(String id, Map<String, dynamic> map) {
+    final model = PetModel.fromMap(map, id);
+    return Pet(id: model.petId, name: model.name, breed: model.breed, gender: model.gender, age: model.age, type: model.type);
   }
 }

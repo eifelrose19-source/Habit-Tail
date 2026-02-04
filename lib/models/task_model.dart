@@ -98,4 +98,23 @@ class TaskModel {
   String toString() {
     return 'TaskModel(taskId: $taskId, createdBy: $createdBy, familyId: $familyId, frequency: $frequency, points: $points, title: $title, lastCompleted: $lastCompleted)';
   }
+
+  /// Compatibility factory used by older repositories expecting `fromMap`
+  factory TaskModel.fromMap(Map<String, dynamic> map, String id) {
+    return TaskModel(
+      taskId: id,
+      createdBy: map['Created_by'] ?? "",
+      familyId: map['Family_id'] ?? "",
+      frequency: map['Frequency'] ?? "",
+      points: (map['Points'] is num) ? (map['Points'] as num).toInt() : 0,
+      title: map['Title'] ?? map['title'] ?? "",
+      lastCompleted: map['last_completed'] is Timestamp ? (map['last_completed'] as Timestamp).toDate() : null,
+    );
+  }
+}
+
+extension TaskModelCompat on TaskModel {
+  String get id => taskId;
+
+  Map<String, dynamic> toMap() => toFirestore();
 }

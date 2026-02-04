@@ -4,7 +4,7 @@ import '../models/user_model.dart';
 import '../models/pet_model.dart';
 import '../models/task_model.dart';
 import '../models/reward_model.dart';
-import '../models/pet_vet_info_model.dart';
+import '../models/vetinfo_model.dart';
 
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
