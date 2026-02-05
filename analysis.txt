@@ -1,0 +1,19 @@
+﻿Analyzing habit_tail...                                         
+
+   info - The imported package 'firebase_auth' isn't a dependency of the importing package - lib\providers\auth_provider.dart:2:8 - depend_on_referenced_packages
+  error - Target of URI doesn't exist: 'package:firebase_auth/firebase_auth.dart' - lib\providers\auth_provider.dart:2:8 - uri_does_not_exist
+  error - Undefined class 'FirebaseAuth' - lib\providers\auth_provider.dart:5:9 - undefined_class
+  error - Undefined name 'FirebaseAuth' - lib\providers\auth_provider.dart:5:30 - undefined_identifier
+  error - Undefined class 'User' - lib\providers\auth_provider.dart:6:3 - undefined_class
+  error - Undefined class 'User' - lib\providers\auth_provider.dart:9:3 - undefined_class
+  error - Undefined class 'User' - lib\providers\auth_provider.dart:16:38 - undefined_class
+   info - The imported package 'firebase_auth' isn't a dependency of the importing package - lib\services\auth_service.dart:1:8 - depend_on_referenced_packages
+  error - Target of URI doesn't exist: 'package:firebase_auth/firebase_auth.dart' - lib\services\auth_service.dart:1:8 - uri_does_not_exist
+  error - Undefined class 'FirebaseAuth' - lib\services\auth_service.dart:4:9 - undefined_class
+  error - Undefined name 'FirebaseAuth' - lib\services\auth_service.dart:4:30 - undefined_identifier
+  error - Undefined class 'User' - lib\services\auth_service.dart:7:3 - undefined_class
+  error - The name 'User' isn't a type, so it can't be used as a type argument - lib\services\auth_service.dart:13:10 - non_type_as_type_argument
+  error - The name 'UserCredential' isn't a type, so it can't be used as a type argument - lib\services\auth_service.dart:16:10 - non_type_as_type_argument
+  error - The name 'UserCredential' isn't a type, so it can't be used as a type argument - lib\services\auth_service.dart:24:10 - non_type_as_type_argument
+warning - Unused import: 'package:cloud_firestore/cloud_firestore.dart' - lib\services\redemption_log_service.dart:1:8 - unused_import
+
