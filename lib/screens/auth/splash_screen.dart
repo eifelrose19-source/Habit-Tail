@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -12,7 +11,6 @@ class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
-  int _selectedPetIndex = -1; // -1 means none selected yet
 
   @override
   void initState() {
@@ -25,36 +23,19 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _controller, curve: Curves.easeIn),
     );
     _controller.forward();
+
+    // Auto-navigate to login screen after 3 seconds
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    });
   }
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
-  }
-
-  Widget _buildPetIcon(String assetName, int index, double size) {
-    bool isSelected = _selectedPetIndex == index;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedPetIndex = index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.white.withValues(alpha: 0.4) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12), // Matches your 12px spec
-          border: Border.all(
-            color: isSelected ? Colors.white : Colors.transparent,
-            width: 2,
-          ),
-        ),
-        child: Image.asset(
-          'assets/images/icons/$assetName', 
-          width: size,
-          height: size,
-        ),
-      ),
-    );
   }
 
   @override
@@ -66,61 +47,50 @@ class _SplashScreenState extends State<SplashScreen>
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFD0BFFF), Color(0xFFFFADBC)], // Your Iris & Pink
+            colors: [Color(0xFFD0BFFF), Color(0xFFFFADBC)], // Iris & Pink
           ),
         ),
         child: FadeTransition(
           opacity: _fadeAnimation,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0), // Your 20px spec
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  "HabitTail",
-                  style: TextStyle(
-                    fontFamily: 'Quicksand',
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF3F2E5A), // Your Midnight Plum
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Spacer(flex: 2),
+                  // HabitTail logo text image
+                  Image.asset(
+                    'assets/images/icons/hbtletters.png',
+                    height: 100,
                   ),
-                ),
-                const SizedBox(height: 40),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildPetIcon('hbtdog.png', 0, 80),
-                    _buildPetIcon('hbthamster.png', 1, 65),
-                    _buildPetIcon('hbtkitty.png', 2, 80),
-                  ],
-                ),
-                const SizedBox(height: 50),
-                if (_selectedPetIndex != -1)
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52, // Your 52px button spec
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF3F2E5A),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                  const SizedBox(height: 40),
+                  // Pet icons row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/images/icons/hbtdog.png',
+                        width: 80,
+                        height: 80,
                       ),
-                      onPressed: () {
-                        Navigator.pushReplacementNamed(context, '/login');
-                      },
-                      child: const Text(
-                        "Let's Go!",
-                        style: TextStyle(
-                          fontFamily: 'Quicksand',
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                      const SizedBox(width: 12),
+                      Image.asset(
+                        'assets/images/icons/hbthamster.png',
+                        width: 65,
+                        height: 65,
                       ),
-                    ),
+                      const SizedBox(width: 12),
+                      Image.asset(
+                        'assets/images/icons/hbtkitty.png',
+                        width: 80,
+                        height: 80,
+                      ),
+                    ],
                   ),
-              ],
+                  const Spacer(flex: 3),
+                ],
+              ),
             ),
           ),
         ),
