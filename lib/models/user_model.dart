@@ -1,20 +1,20 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+enum DashboardType { parent, child }
+
 class UserModel {
   final String userId;
-  final String childId;
   final String familyId;
   final String name;
-  final String parentId;
   final int totalPoints;
+  final bool isParent;
 
   UserModel({
     required this.userId,
-    required this.childId,
     required this.familyId,
     required this.name,
-    required this.parentId,
     required this.totalPoints,
+    required this.isParent,
   });
 
   /// Factory constructor using DocumentSnapshot to handle ID and data at once
@@ -23,41 +23,40 @@ class UserModel {
 
     return UserModel(
       userId: doc.id,
-      childId: data['Child_id'] ?? "",
       familyId: data['Family_id'] ?? "",
       name: data['Name'] ?? "",
-      parentId: data['Parent_id'] ?? "",
       totalPoints: (data['Total_points'] as num?)?.toInt() ?? 0,
+      isParent: data['Is_parent'] ?? false, // Add this field
     );
   }
 
-  /// Converts model to Map for Firestore using your specific PascalCase keys
+  /// Converts model to Map for Firestore using HabitTail specific PascalCase keys
   Map<String, dynamic> toFirestore() {
     return {
-      'Child_id': childId,
       'Family_id': familyId,
       'Name': name,
-      'Parent_id': parentId,
       'Total_points': totalPoints,
+      'Is_parent': isParent, // Add this field
     };
   }
+
+  /// Getter to determine dashboard type based on role
+  DashboardType get dashboardType => isParent ? DashboardType.parent : DashboardType.child;
 
   /// Returns a new instance with updated fields for easier state management
   UserModel copyWith({
     String? userId,
-    String? childId,
     String? familyId,
     String? name,
-    String? parentId,
     int? totalPoints,
+    bool? isParent,
   }) {
     return UserModel(
       userId: userId ?? this.userId,
-      childId: childId ?? this.childId,
       familyId: familyId ?? this.familyId,
       name: name ?? this.name,
-      parentId: parentId ?? this.parentId,
       totalPoints: totalPoints ?? this.totalPoints,
+      isParent: isParent ?? this.isParent,
     );
   }
 
@@ -67,20 +66,19 @@ class UserModel {
 
     return other is UserModel &&
         other.userId == userId &&
-        other.childId == childId &&
         other.familyId == familyId &&
         other.name == name &&
-        other.parentId == parentId &&
-        other.totalPoints == totalPoints;
+        other.totalPoints == totalPoints &&
+        other.isParent == isParent;
   }
 
   @override
   int get hashCode {
-    return Object.hash(userId, childId, familyId, name, parentId, totalPoints);
+    return Object.hash(userId, familyId, name, totalPoints, isParent);
   }
 
   @override
   String toString() {
-    return 'UserModel(userId: $userId, childId: $childId, familyId: $familyId, name: $name, parentId: $parentId, totalPoints: $totalPoints)';
+    return 'UserModel(userId: $userId, familyId: $familyId, name: $name, totalPoints: $totalPoints, isParent: $isParent)';
   }
 }
