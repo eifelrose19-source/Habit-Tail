@@ -1,131 +1,141 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
-  @override
-  State<LoginScreen> createState() => _LoginScreenState();
-}
-
-class _LoginScreenState extends State<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _isLoading = false;
-  bool _obscurePassword = true;
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _handleLogin() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() => _isLoading = true);
-
-    try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.signIn(_emailController.text.trim(), _passwordController.text);
-      if (mounted) Navigator.pushReplacementNamed(context, '/home');
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed: ${e.toString()}', style: const TextStyle(fontFamily: 'Quicksand')), backgroundColor: Colors.red),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
+  // --- Color Palette for HabitTail
+  static const Color softIris = Color(0xFFD0BFFF);      // Primary Background
+  static const Color electricSky = Color(0xFF98E4FF);   // Button Background
+  static const Color midnightPlum = Color(0xFF3F2E5A);  // Text Color
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // The background fills the entire screen
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(
+          // Using a subtle gradient to match the bubbly look, 
+          // or you can just use color: softIris
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFD0BFFF), Color(0xFFFFADBC)],
+            colors: [
+              softIris,
+              Color(0xFFE0D4FC), // A slightly lighter shade for depth
+            ],
           ),
         ),
         child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    Image.asset('assets/images/icons/hbtlogo.png', width: 180, height: 180),
-                    const SizedBox(height: 32),
-                    TextFormField(
-                      controller: _emailController,
-                      style: const TextStyle(fontFamily: 'Quicksand'),
-                      decoration: InputDecoration(
-                        labelText: 'Email Address',
-                        labelStyle: const TextStyle(fontFamily: 'Quicksand', color: Color(0xFF3F2E5A)),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                        prefixIcon: const Icon(Icons.email, color: Color(0xFFD0BFFF)),
-                      ),
-                      validator: (value) => (value == null || !value.contains('@')) ? 'Enter valid email' : null,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      style: const TextStyle(fontFamily: 'Quicksand'),
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        labelStyle: const TextStyle(fontFamily: 'Quicksand', color: Color(0xFF3F2E5A)),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                        prefixIcon: const Icon(Icons.lock, color: Color(0xFFD0BFFF)),
-                        suffixIcon: IconButton(
-                          icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
-                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                        ),
-                      ),
-                      validator: (value) => (value == null || value.length < 6) ? 'Password too short' : null,
-                    ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () => Navigator.pushNamed(context, '/forgot-password'),
-                        child: const Text('Forgot Password?', style: TextStyle(fontFamily: 'Quicksand', color: Colors.white)),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleLogin,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF3F2E5A),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        child: _isLoading 
-                          ? const CircularProgressIndicator(color: Colors.white) 
-                          : const Text('Login', style: TextStyle(fontFamily: 'Quicksand', fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-                      ),
-                    ),
-                  ],
+          child: Padding(
+            // "Side Margins 20px"
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Spacer(flex: 2),
+
+                // --- LOGO ---
+                // "The habit tail lettering is an image called hbtletters.png"
+                Image.asset(
+                  'assets/images/icons/hbtletters.png', 
+                   width: 300,                          
+                   fit: BoxFit.contain,                  
+                ),                                      
+
+                const Spacer(flex: 3),
+
+                // --- LOG IN BUTTON ---
+                // "Log in button will open page to Log in"
+                _buildButton(
+                  context: context,
+                  label: "LOG IN",
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const LoginPagePlaceholder()),
+                    );
+                  },
                 ),
-              ),
+
+                const SizedBox(height: 16), // Space between buttons
+
+                // --- CREATE ACCOUNT BUTTON ---
+                // "Create Account button will open page to Sign Up page"
+                _buildButton(
+                  context: context,
+                  label: "CREATE ACCOUNT",
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const SignUpPagePlaceholder()),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 40), // Bottom spacing
+              ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  // Helper widget to build the buttons exactly to spec
+  Widget _buildButton({
+    required BuildContext context,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return SizedBox(
+      width: double.infinity, // Full width minus padding
+      height: 52, // "Button Height 52px"
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: electricSky, // "Electric Sky: Buttons"
+          foregroundColor: midnightPlum, // "Midnight Plum: All readable text"
+          elevation: 0, // Flat style to match design
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12), // "Corner Radius 12px"
+          ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.quicksand(
+            fontSize: 16,       // "Size 16px"
+            fontWeight: FontWeight.bold, // "Weight Bold"
+            color: midnightPlum,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// --- Placeholder Pages for Navigation Testing ---
+
+class LoginPagePlaceholder extends StatelessWidget {
+  const LoginPagePlaceholder({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Log In Form")),
+      body: const Center(child: Text("This is the Log In Form Page")),
+    );
+  }
+}
+
+class SignUpPagePlaceholder extends StatelessWidget {
+  const SignUpPagePlaceholder({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Sign Up Form")),
+      body: const Center(child: Text("This is the Sign Up Page")),
     );
   }
 }
