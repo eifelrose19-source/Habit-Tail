@@ -4,14 +4,14 @@ import '../../providers/auth_provider.dart';
 import '../../services/family_service.dart';
 import '../../models/family_model.dart';
 
-class CreateFamilyScreen extends StatefulWidget {
-  const CreateFamilyScreen({super.key});
+class CreateOrJoinFamilyScreen extends StatefulWidget {
+  const CreateOrJoinFamilyScreen({super.key});
 
   @override
-  State<CreateFamilyScreen> createState() => _CreateFamilyScreenState();
+  State<CreateOrJoinFamilyScreen> createState() => _CreateOrJoinFamilyScreenState();
 }
 
-class _CreateFamilyScreenState extends State<CreateFamilyScreen> {
+class _CreateOrJoinFamilyScreenState extends State<CreateOrJoinFamilyScreen> {
   final _formKey = GlobalKey<FormState>();
 
   String _subscriptionLevel = 'free';

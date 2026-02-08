@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-class SignupScreen extends StatefulWidget {
-  const SignupScreen({super.key});
+class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({super.key});
 
   @override
-  State<SignupScreen> createState() => _SignupScreenState();
+  State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen> {
+class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -32,21 +31,20 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.signUp(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
+      // TODO: Add your authentication logic here
+      // await authProvider.signUp(_emailController.text.trim(), _passwordController.text);
       
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/create-or-join');
+        Navigator.pushReplacementNamed(context, '/create-or-join-family');
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Sign up failed: ${e.toString()}', 
-              style: const TextStyle(fontFamily: 'Quicksand')),
+            content: Text(
+              'Sign up failed: ${e.toString()}',
+              style: GoogleFonts.quicksand(),
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -75,141 +73,259 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
         ),
         child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0), // Your 20px spec
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Form(
                 key: _formKey,
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    const SizedBox(height: 40),
+
+                    // Logo
                     Image.asset(
-                      'assets/images/icons/hbtlogo.png',
-                      width: 180,
-                      height: 180,
+                      'assets/images/icons/hbtletters.png',
+                      width: 200,
+                      fit: BoxFit.contain,
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
+
+                    const SizedBox(height: 40),
+
+                    // Title
+                    Text(
                       'Create your account',
-                      style: TextStyle(
-                        fontFamily: 'Quicksand',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.quicksand(
                         fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF3F2E5A), // Midnight Plum
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF3F2E5A),
                       ),
                     ),
-                    const SizedBox(height: 32),
-                    
-                    // Email Field
-                    TextFormField(
+
+                    const SizedBox(height: 40),
+
+                    // Email Input
+                    Text(
+                      'Email:',
+                      style: GoogleFonts.quicksand(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF3F2E5A),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildInputField(
                       controller: _emailController,
+                      hint: 'email@example.com',
                       keyboardType: TextInputType.emailAddress,
-                      style: const TextStyle(fontFamily: 'Quicksand'),
-                      decoration: InputDecoration(
-                        labelText: 'Email Address',
-                        labelStyle: const TextStyle(fontFamily: 'Quicksand', color: Color(0xFF3F2E5A)),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16), // 52px height
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12), // 12px spec
-                          borderSide: BorderSide.none,
-                        ),
-                        prefixIcon: const Icon(Icons.email, color: Color(0xFFD0BFFF)),
-                      ),
-                      validator: (value) => (value == null || !value.contains('@')) ? 'Enter a valid email' : null,
+                      validator: (value) =>
+                          (value == null || !value.contains('@'))
+                              ? 'Enter a valid email'
+                              : null,
                     ),
-                    const SizedBox(height: 16),
-                    
-                    // Password Field
-                    TextFormField(
+
+                    const SizedBox(height: 24),
+
+                    // Password Input
+                    Text(
+                      'Password:',
+                      style: GoogleFonts.quicksand(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF3F2E5A),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildInputField(
                       controller: _passwordController,
+                      hint: '••••••••••••',
+                      isPassword: true,
                       obscureText: _obscurePassword,
-                      style: const TextStyle(fontFamily: 'Quicksand'),
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        labelStyle: const TextStyle(fontFamily: 'Quicksand', color: Color(0xFF3F2E5A)),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        prefixIcon: const Icon(Icons.lock, color: Color(0xFFD0BFFF)),
-                        suffixIcon: IconButton(
-                          icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
-                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                        ),
-                      ),
-                      validator: (value) => (value == null || value.length < 6) ? 'Must be 6+ characters' : null,
+                      onToggleVisibility: () {
+                        setState(() => _obscurePassword = !_obscurePassword);
+                      },
+                      validator: (value) => (value == null || value.length < 6)
+                          ? 'Must be 6+ characters'
+                          : null,
                     ),
-                    const SizedBox(height: 16),
-                    
-                    // Confirm Password Field
-                    TextFormField(
+
+                    const SizedBox(height: 24),
+
+                    // Confirm Password Input
+                    Text(
+                      'Confirm Password:',
+                      style: GoogleFonts.quicksand(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF3F2E5A),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildInputField(
                       controller: _confirmPasswordController,
+                      hint: '••••••••••••',
+                      isPassword: true,
                       obscureText: _obscureConfirmPassword,
-                      style: const TextStyle(fontFamily: 'Quicksand'),
-                      decoration: InputDecoration(
-                        labelText: 'Confirm Password',
-                        labelStyle: const TextStyle(fontFamily: 'Quicksand', color: Color(0xFF3F2E5A)),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFFD0BFFF)),
-                        suffixIcon: IconButton(
-                          icon: Icon(_obscureConfirmPassword ? Icons.visibility : Icons.visibility_off),
-                          onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
-                        ),
-                      ),
-                      validator: (value) => (value != _passwordController.text) ? 'Passwords do not match' : null,
+                      onToggleVisibility: () {
+                        setState(() =>
+                            _obscureConfirmPassword = !_obscureConfirmPassword);
+                      },
+                      validator: (value) =>
+                          (value != _passwordController.text)
+                              ? 'Passwords do not match'
+                              : null,
                     ),
-                    const SizedBox(height: 32),
-                    
+
+                    const SizedBox(height: 40),
+
                     // Sign Up Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52, // 52px spec
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleSignUp,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF3F2E5A),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                    _buildPrimaryButton(
+                      label: 'Sign Up',
+                      onTap: _isLoading ? null : _handleSignUp,
+                      isLoading: _isLoading,
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Login Link
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Already have an account? ',
+                          style: GoogleFonts.quicksand(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF3F2E5A),
                           ),
                         ),
-                        child: _isLoading
-                            ? const CircularProgressIndicator(color: Colors.white)
-                            : const Text(
-                                'Sign Up',
-                                style: TextStyle(
-                                  fontFamily: 'Quicksand',
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                      ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          child: Text(
+                            'Log In',
+                            style: GoogleFonts.quicksand(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF3F2E5A),
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text(
-                        'Already have an account? Login',
-                        style: TextStyle(fontFamily: 'Quicksand', color: Colors.white),
-                      ),
-                    ),
+
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // Input Field Widget
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String hint,
+    bool isPassword = false,
+    bool obscureText = false,
+    VoidCallback? onToggleVisibility,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+  }) {
+    return SizedBox(
+      height: 52,
+      child: TextFormField(
+        controller: controller,
+        obscureText: obscureText,
+        keyboardType: keyboardType,
+        validator: validator,
+        style: GoogleFonts.quicksand(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: const Color(0xFF3F2E5A),
+        ),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: GoogleFonts.quicksand(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: const Color(0xFF3F2E5A).withValues(alpha: 0.5), // FIXED
+          ),
+          filled: true,
+          fillColor: const Color(0xFFFFFFFF),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.red, width: 1),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.red, width: 2),
+          ),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          errorStyle: GoogleFonts.quicksand(
+            fontSize: 12,
+            color: Colors.red,
+          ),
+          suffixIcon: isPassword
+              ? IconButton(
+                  icon: Icon(
+                    obscureText ? Icons.visibility_off : Icons.visibility,
+                    color: const Color(0xFF3F2E5A).withValues(alpha: 0.5), // FIXED
+                  ),
+                  onPressed: onToggleVisibility,
+                )
+              : null,
+        ),
+      ),
+    );
+  }
+
+  // Primary Button Widget
+  Widget _buildPrimaryButton({
+    required String label,
+    required VoidCallback? onTap,
+    bool isLoading = false,
+  }) {
+    return SizedBox(
+      height: 52,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF98E4FF), // Electric Sky
+          foregroundColor: const Color(0xFF3F2E5A),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: isLoading
+            ? const SizedBox(
+                height: 24,
+                width: 24,
+                child: CircularProgressIndicator(
+                  color: Color(0xFF3F2E5A),
+                  strokeWidth: 2.5,
+                ),
+              )
+            : Text(
+                label,
+                style: GoogleFonts.quicksand(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF3F2E5A),
+                ),
+              ),
       ),
     );
   }

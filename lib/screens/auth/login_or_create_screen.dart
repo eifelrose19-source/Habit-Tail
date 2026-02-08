@@ -68,7 +68,7 @@ class LoginOrCreateScreen extends StatelessWidget {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const SignupScreen()),
+                      MaterialPageRoute(builder: (context) => const SignUpScreen()),
                     );
                   },
                 ),
