@@ -12,7 +12,6 @@ class CreateOrJoinFamilyScreen extends StatelessWidget {
 @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // The background fills the entire screen
       body: Container(
         width: double.infinity,
         height: double.infinity,

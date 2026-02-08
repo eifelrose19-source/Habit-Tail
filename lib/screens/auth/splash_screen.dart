@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'login_or_create_screen.dart'; 
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -24,10 +25,16 @@ class _SplashScreenState extends State<SplashScreen>
     );
     _controller.forward();
 
-    // Auto-navigate to login screen after 3 seconds
+    // --- NAVIGATION LOGIC ---
+    // Auto-navigate to LoginOrCreateScreen after 3 seconds
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/login');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const LoginOrCreateScreen(),
+          ),
+        );
       }
     });
   }
@@ -47,7 +54,8 @@ class _SplashScreenState extends State<SplashScreen>
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFD0BFFF), Color(0xFFFFADBC)], // Iris & Pink
+            // Iris & Pink Gradient
+            colors: [Color(0xFFD0BFFF), Color(0xFFFFADBC)], 
           ),
         ),
         child: FadeTransition(
