@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'manage_family_screen.dart';  // Add this import
-import 'join_family_screen.dart';     // Add this import
+import 'package:habit_tail/screens/auth/manage_family_screen.dart';  
+import 'package:habit_tail/screens/auth/join_family_screen.dart';     
 
 class CreateOrJoinFamilyScreen extends StatelessWidget {
   const CreateOrJoinFamilyScreen({super.key});
