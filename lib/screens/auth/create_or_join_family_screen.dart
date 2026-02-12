@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'manage_family_screen.dart';  // Add this import
+import 'join_family_screen.dart';     // Add this import
 
 class CreateOrJoinFamilyScreen extends StatelessWidget {
   const CreateOrJoinFamilyScreen({super.key});
@@ -9,7 +11,7 @@ class CreateOrJoinFamilyScreen extends StatelessWidget {
   static const Color electricSky = Color(0xFF98E4FF);   // Button Background
   static const Color midnightPlum = Color(0xFF3F2E5A);  // Text Color
 
-@override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
@@ -28,7 +30,6 @@ class CreateOrJoinFamilyScreen extends StatelessWidget {
         ),
         child: SafeArea(
           child: Padding(
-            
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -38,8 +39,8 @@ class CreateOrJoinFamilyScreen extends StatelessWidget {
                 // --- LOGO --
                 Image.asset(
                   'assets/images/icons/hbtletters.png', 
-                   width: 300,                          
-                   fit: BoxFit.contain,                  
+                  width: 300,                          
+                  fit: BoxFit.contain,                  
                 ),                                      
 
                 const Spacer(flex: 3),
@@ -49,8 +50,11 @@ class CreateOrJoinFamilyScreen extends StatelessWidget {
                   context: context,
                   label: "Create Family",
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Create Family screen coming soon!")),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ManageFamilyScreen(),
+                      ),
                     );
                   },
                 ),
@@ -62,8 +66,11 @@ class CreateOrJoinFamilyScreen extends StatelessWidget {
                   context: context,
                   label: "Join Family",
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                     const SnackBar(content: Text("Join Family screen coming soon!")),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const JoinFamilyScreen(),
+                      ),
                     );
                   },
                 ),
