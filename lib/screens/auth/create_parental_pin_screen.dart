@@ -1,9 +1,3 @@
-
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -17,9 +11,11 @@ class CreateParentalPin extends StatelessWidget {
   static const Color electricSky = Color(0xFF98E4FF);   // Button Background
   static const Color midnightPlum = Color(0xFF3F2E5A);  // Text Color 
 
-  @override
-  Widget build(BuildContext context)
+  // Add your family code/pin here
+  static const String familyCode = "1234"; // Replace with actual generated PIN
 
+  @override
+  Widget build(BuildContext context) {  // Added missing opening brace
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -63,7 +59,7 @@ class CreateParentalPin extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: midnightPlum.withAlpha((0.1 * 255).round()),
+                        color: midnightPlum.withAlpha(26), // Fixed: 0.1 * 255 ≈ 26
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -85,8 +81,8 @@ class CreateParentalPin extends StatelessWidget {
                 // --- LOGO ---
                 Image.asset(
                   'assets/images/icons/hbtletters.png', 
-                   width: 250,                          
-                   fit: BoxFit.contain,                  
+                  width: 250,                          
+                  fit: BoxFit.contain,                  
                 ),                                      
 
                 const Spacer(flex: 3), 
@@ -96,7 +92,7 @@ class CreateParentalPin extends StatelessWidget {
                   context: context,
                   label: "Create Pin",
                   onTap: () {
-                    Clipboard.setData(const ClipboardData(text: familyCode)).then((_) {
+                    Clipboard.setData(ClipboardData(text: familyCode)).then((_) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text("Family code copied to clipboard!"),
@@ -160,9 +156,3 @@ class CreateParentalPin extends StatelessWidget {
     );
   }
 }
-
-
-
-
-
-
