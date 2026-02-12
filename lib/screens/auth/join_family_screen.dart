@@ -17,7 +17,7 @@ class JoinFamilyScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Join the Adventure",
+              "Enter your family code below to join your family",
               style: GoogleFonts.quicksand(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
