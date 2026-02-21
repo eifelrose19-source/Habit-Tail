@@ -41,7 +41,7 @@ class _PartnerPinScreenState extends State<PartnerPinScreen> {
   void _verifyPin() {
     String enteredPin = _pinControllers.map((c) => c.text).join();
     
-    // TODO: Replace with actual PIN verification logic
+    //TODO: Replace with actual PIN verification logic
     const String correctPin = "1234"; // This should come from your saved PIN
     
     if (enteredPin == correctPin) {
