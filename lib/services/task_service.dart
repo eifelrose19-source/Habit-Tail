@@ -1,10 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'user_service.dart';
 
 class TaskService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final UserService _userService = UserService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // ─── Constants ───────────────────────────────────────────────
@@ -139,8 +137,9 @@ class TaskService {
 
   // ─── Parent: Approve Task ─────────────────────────────────────
 
-  /// Called by a Parent to approve a task. Moves status from
-  /// [pending_approval] → [completed] and awards points to the child.
+  /// Called by a Parent to approve a task. Atomically moves status
+  /// from [pending_approval] → [completed] and increments the
+  /// child's Total_points in a single transaction.
   Future<void> approveTask(String familyId, String taskId) async {
     try {
       final String? userId = _auth.currentUser?.uid;
@@ -151,28 +150,44 @@ class TaskService {
         throw Exception('Only a Parent can approve tasks.');
       }
 
-      final taskSnapshot = await _getVerifiedTask(familyId, taskId);
-      final data = taskSnapshot.data() as Map<String, dynamic>?;
-      final String? currentStatus = data?['status'] as String?;
+      await _db.runTransaction((transaction) async {
+        final taskRef = _taskRef(familyId, taskId);
+        final taskSnapshot = await transaction.get(taskRef);
 
-      if (currentStatus != 'pending_approval') {
-        throw Exception(
-          'Task cannot be approved. Current status: $currentStatus.',
-        );
-      }
+        if (!taskSnapshot.exists) {
+          throw Exception('Task $taskId does not exist in family $familyId.');
+        }
 
-      await _taskRef(familyId, taskId).update({
-        'status': 'completed',
-        'approvedBy': userId,
-        'approvedAt': FieldValue.serverTimestamp(),
+        final data = taskSnapshot.data() as Map<String, dynamic>?;
+        final String? currentStatus = data?['status'] as String?;
+
+        if (currentStatus != 'pending_approval') {
+          throw Exception(
+            'Task cannot be approved. Current status: $currentStatus.',
+          );
+        }
+
+        final String? assignedTo = data?['assignedTo'] as String?;
+        if (assignedTo == null) {
+          throw Exception('Task has no assigned user.');
+        }
+
+        final int points = (data?['points'] as int? ?? _minPointsPerTask)
+            .clamp(_minPointsPerTask, _maxPointsPerTask);
+
+        final userRef = _db.collection('Users').doc(assignedTo);
+
+        // Both writes commit atomically — if either fails, both are rolled back
+        transaction.update(taskRef, {
+          'status': 'completed',
+          'approvedBy': userId,
+          'approvedAt': FieldValue.serverTimestamp(),
+        });
+
+        transaction.update(userRef, {
+          'Total_points': FieldValue.increment(points),
+        });
       });
-
-      final String? assignedTo = data?['assignedTo'] as String?;
-      final int points = (data?['points'] as int? ?? _minPointsPerTask)
-          .clamp(_minPointsPerTask, _maxPointsPerTask);
-      if (assignedTo != null && points > 0) {
-        await _userService.addPoints(assignedTo, familyId, points);
-      }
     } catch (e) {
       print('[TaskService] approveTask failed: $e');
       rethrow;
