@@ -8,7 +8,7 @@ class RedemptionLogRepository {
     return _firestore
         .collection('Families')
         .doc(familyId)
-        .collection('Redemption Logs')
+        .collection('RedemptionLog')
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => RedemptionLogModel.fromFirestore(doc))
@@ -20,7 +20,7 @@ class RedemptionLogRepository {
     final doc = await _firestore
         .collection('Families')
         .doc(familyId)
-        .collection('Redemption Logs')
+        .collection('RedemptionLog')
         .doc(logId)
         .get();
     if (!doc.exists) return null;
@@ -32,7 +32,7 @@ class RedemptionLogRepository {
     await _firestore
         .collection('Families')
         .doc(familyId)
-        .collection('Redemption Logs')
+        .collection('RedemptionLog')
         .add(log.toFirestore());
   }
 
@@ -41,7 +41,7 @@ class RedemptionLogRepository {
     await _firestore
         .collection('Families')
         .doc(familyId)
-        .collection('Redemption Logs')
+        .collection('RedemptionLog')
         .doc(logId)
         .update(data);
   }
@@ -50,7 +50,7 @@ class RedemptionLogRepository {
     await _firestore
         .collection('Families')
         .doc(familyId)
-        .collection('Redemption Logs')
+        .collection('RedemptionLog')
         .doc(logId)
         .delete();
   }
