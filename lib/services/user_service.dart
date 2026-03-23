@@ -3,23 +3,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class UserService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
+  /// One-time fetch of a user's profile data.
+  /// For live updates use UserRepository.watchUser() instead.
   Future<Map<String, dynamic>?> getUserProfile(String userId) async {
     final doc = await _db.collection('Users').doc(userId).get();
     return doc.data();
   }
 
+  /// Updates specific fields on a user profile using merge
+  /// to avoid overwriting existing fields.
   Future<void> updateUserProfile(String userId, Map<String, dynamic> data) {
     return _db
         .collection('Users')
         .doc(userId)
         .set(data, SetOptions(merge: true));
-  }
-
-  /// Increments the user's total points by the given amount.
-  /// Pass a negative value to deduct points.
-  Future<void> incrementPoints(String userId, int points) {
-    return _db.collection('Users').doc(userId).update({
-      'totalPoints': FieldValue.increment(points),
-    });
   }
 }
