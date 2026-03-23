@@ -4,7 +4,7 @@ import '../models/redemption_log_model.dart';
 class RedemptionLogRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Stream<List<RedemptionLogModel>> watchRedemptionLogs(String familyId) {
+  Stream<List<RedemptionLogModel>> watchRedemptionLog(String familyId) {
     return _firestore
         .collection('Families')
         .doc(familyId)
