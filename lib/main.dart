@@ -1,18 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'firebase_options.dart';
 
 // Authenticated Screen Imports
 import 'screens/auth/splash_screen.dart';
-import 'screens/auth/login_screen.dart'; 
-import 'screens/auth/signup_screen.dart'; 
+import 'screens/auth/login_screen.dart';
+import 'screens/auth/signup_screen.dart';
 import 'screens/auth/create_or_join_family_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Enable Firestore offline persistence with unlimited cache size
+  FirebaseFirestore.instance.settings = const Settings(
+    persistenceEnabled: true,
+    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
   );
 
   runApp(
@@ -93,7 +100,8 @@ class HabitTailApp extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
       ),
       initialRoute: '/',
@@ -120,7 +128,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   // Temporary Placeholders until you finish the Dashboard/Task screens
   final List<Widget> _pages = [
-    const Center(child: Text('Home Dashboard Coming Soon')), 
+    const Center(child: Text('Home Dashboard Coming Soon')),
     const Center(child: Text('Tasks Screen')),
     const Center(child: Text('Rewards Screen')),
     const Center(child: Text('Pets Screen')),
@@ -135,13 +143,18 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) => setState(() => _selectedIndex = index),
-        indicatorColor: const Color(0xFFD0BFFF).withValues(alpha: 0.3), 
+        onDestinationSelected: (index) =>
+            setState(() => _selectedIndex = index),
+        indicatorColor: const Color(0xFFD0BFFF).withValues(alpha: 0.3),
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_rounded), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.task_alt_rounded), label: 'Tasks'),
-          NavigationDestination(icon: Icon(Icons.card_giftcard_rounded), label: 'Rewards'),
-          NavigationDestination(icon: Icon(Icons.pets_rounded), label: 'Pets'),
+          NavigationDestination(
+              icon: Icon(Icons.home_rounded), label: 'Home'),
+          NavigationDestination(
+              icon: Icon(Icons.task_alt_rounded), label: 'Tasks'),
+          NavigationDestination(
+              icon: Icon(Icons.card_giftcard_rounded), label: 'Rewards'),
+          NavigationDestination(
+              icon: Icon(Icons.pets_rounded), label: 'Pets'),
         ],
       ),
     );
