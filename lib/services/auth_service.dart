@@ -20,7 +20,8 @@ class AuthService {
     return _auth.currentUser != null;
   }
 
-  /// Sign in with email and password
+  /// Sign in with email and password.
+  /// Checks if Firestore user record exists after sign in.
   Future<UserCredential> signIn(String email, String password) async {
     try {
       final credential = await _auth.signInWithEmailAndPassword(
@@ -33,8 +34,8 @@ class AuthService {
     }
   }
 
-  /// Sign up and create user document in Firestore
-  /// Returns the created UserModel
+  /// Sign up and create user document in Firestore.
+  /// Returns the created UserModel.
   Future<UserModel> signUpAndCreateUser({
     required String email,
     required String password,
@@ -70,6 +71,45 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     }
+  }
+
+  /// Checks whether a Firestore user document exists for the current Auth user.
+  /// Call this after sign in to catch any missing records.
+  /// Returns false if the document is missing — use this to route the user
+  /// to a recovery or re-onboarding screen in your controller.
+  Future<bool> userRecordExists() async {
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) return false;
+    final user = await _userRepo.getUser(userId);
+    return user != null;
+  }
+
+  /// Syncs the Firestore user document for the current Auth user.
+  /// Only creates the document if it is missing — safe to call on every sign in.
+  /// Use when you have the user's details available (e.g. from onboarding).
+  Future<void> syncUserRecord({
+    required String name,
+    required String familyId,
+    required bool isParent,
+  }) async {
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) throw Exception('No user logged in');
+
+    final existingUser = await _userRepo.getUser(userId);
+
+    // Document already exists — nothing to do
+    if (existingUser != null) return;
+
+    // Document missing — recreate it
+    final newUser = UserModel(
+      userId: userId,
+      familyId: familyId,
+      name: name,
+      totalPoints: 0,
+      isParent: isParent,
+    );
+
+    await _userRepo.createUser(userId, newUser);
   }
 
   /// Sign out and clear user data
