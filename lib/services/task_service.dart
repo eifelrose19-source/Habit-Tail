@@ -46,7 +46,7 @@ class TaskService {
           .doc(userId)
           .get();
 
-      return (userSnapshot.data() as Map<String, dynamic>?)?['Role'] as String?;
+      return (userSnapshot.data())?['Role'] as String?;
     } catch (e) {
       print('[TaskService] _getCurrentUserRole failed: $e');
       rethrow;
