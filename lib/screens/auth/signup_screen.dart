@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../services/auth_service.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -13,6 +14,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final AuthService _authService = AuthService();
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -31,9 +33,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Add your authentication logic here
-      // await authProvider.signUp(_emailController.text.trim(), _passwordController.text);
-      
+      await _authService.signUpAndCreateUser(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        name: _emailController.text.trim().split('@').first,
+        familyId: '',
+        isParent: true,
+      );
+
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/create-or-join-family');
       }

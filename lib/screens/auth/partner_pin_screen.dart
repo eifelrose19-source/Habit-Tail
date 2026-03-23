@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class PartnerPinScreen extends StatefulWidget {
   const PartnerPinScreen({super.key});
@@ -38,34 +40,63 @@ class _PartnerPinScreenState extends State<PartnerPinScreen> {
     super.dispose();
   }
 
-  void _verifyPin() {
+  Future<void> _verifyPin() async {
     String enteredPin = _pinControllers.map((c) => c.text).join();
-    
-    //TODO: Replace with actual PIN verification logic
-    const String correctPin = "1234"; // This should come from your saved PIN
-    
-    if (enteredPin == correctPin) {
-      // Navigate to parent dashboard
+
+    if (enteredPin.length < 4) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("PIN verified successfully!"),
-          backgroundColor: Colors.green,
-        ),
-      );
-      // Navigator.push(context, MaterialPageRoute(builder: (context) => ParentDashboardScreen()));
-    } else {
-      // Show error
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Incorrect PIN. Please try again."),
+          content: Text("Please enter all 4 digits."),
           backgroundColor: Colors.red,
         ),
       );
-      // Clear all fields
-      for (var controller in _pinControllers) {
-        controller.clear();
+      return;
+    }
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      // Look up the parent's stored PIN from Firestore
+      final userDoc = await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(user.uid)
+          .get();
+      final storedPin = userDoc.data()?['Parental_pin'] ?? '';
+
+      if (enteredPin == storedPin) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("PIN verified successfully!"),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Incorrect PIN. Please try again."),
+              backgroundColor: Colors.red,
+            ),
+          );
+          for (var controller in _pinControllers) {
+            controller.clear();
+          }
+          _focusNodes[0].requestFocus();
+        }
       }
-      _focusNodes[0].requestFocus();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error verifying PIN: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

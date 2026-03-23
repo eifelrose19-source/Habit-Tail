@@ -1,19 +1,45 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart'; // Import for listEquals
 
+class FamilyMember {
+  final String id;
+  final String role;
+
+  FamilyMember({required this.id, required this.role});
+
+  factory FamilyMember.fromMap(Map<String, dynamic> map) {
+    return FamilyMember(
+      id: map['id'] ?? '',
+      role: map['role'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {'id': id, 'role': role};
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FamilyMember && id == other.id && role == other.role;
+
+  @override
+  int get hashCode => Object.hash(id, role);
+}
+
 class FamilyModel {
   final String familyId;
   final String adminUid;
   final DateTime? createdAt;
   final String subscriptionLevel;
-  final List<String> memberIds;
+  final List<FamilyMember> members;
 
   FamilyModel({
     required this.familyId,
     required this.adminUid,
     this.createdAt,
     required this.subscriptionLevel,
-    this.memberIds = const [],
+    this.members = const [],
   });
 
   /// Factory constructor using DocumentSnapshot with PascalCase database keys
@@ -29,7 +55,10 @@ class FamilyModel {
       // Safely converts Firestore Timestamp to Dart DateTime
       createdAt: (data['Created_at'] as Timestamp?)?.toDate(),
       subscriptionLevel: data['Subscription_level'] ?? 'free',
-      memberIds: List<String>.from(data['member_ids'] ?? []),
+      members: (data['members'] as List<dynamic>?)
+              ?.map((m) => FamilyMember.fromMap(Map<String, dynamic>.from(m)))
+              .toList() ??
+          [],
     );
   }
 
@@ -42,7 +71,7 @@ class FamilyModel {
           ? Timestamp.fromDate(createdAt!)
           : FieldValue.serverTimestamp(),
       'Subscription_level': subscriptionLevel,
-      'member_ids': memberIds,
+      'members': members.map((m) => m.toMap()).toList(),
     };
   }
 
@@ -52,14 +81,14 @@ class FamilyModel {
     String? adminUid,
     DateTime? createdAt,
     String? subscriptionLevel,
-    List<String>? memberIds,
+    List<FamilyMember>? members,
   }) {
     return FamilyModel(
       familyId: familyId ?? this.familyId,
       adminUid: adminUid ?? this.adminUid,
       createdAt: createdAt ?? this.createdAt,
       subscriptionLevel: subscriptionLevel ?? this.subscriptionLevel,
-      memberIds: memberIds ?? this.memberIds,
+      members: members ?? this.members,
     );
   }
 
@@ -72,7 +101,7 @@ class FamilyModel {
         other.adminUid == adminUid &&
         other.createdAt == createdAt &&
         other.subscriptionLevel == subscriptionLevel &&
-        listEquals(other.memberIds, memberIds);
+        listEquals(other.members, members);
   }
 
   @override
@@ -83,12 +112,12 @@ class FamilyModel {
       adminUid,
       createdAt,
       subscriptionLevel,
-      Object.hashAll(memberIds), // Deep hash for the list
+      Object.hashAll(members), // Deep hash for the list
     );
   }
 
   @override
   String toString() {
-    return 'FamilyModel(familyId: $familyId, adminUid: $adminUid, createdAt: $createdAt, subscriptionLevel: $subscriptionLevel, memberIds: $memberIds)';
+    return 'FamilyModel(familyId: $familyId, adminUid: $adminUid, createdAt: $createdAt, subscriptionLevel: $subscriptionLevel, members: $members)';
   }
 }

@@ -59,7 +59,7 @@ class CreateFamilyCode extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: midnightPlum.withAlpha((0.1 * 255).round()),,
+                        color: midnightPlum.withAlpha((0.1 * 255).round()),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),

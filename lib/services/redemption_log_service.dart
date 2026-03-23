@@ -6,7 +6,7 @@ class RedemptionService {
   final RedemptionLogRepository _repository = RedemptionLogRepository();
 
   Stream<List<RedemptionLogModel>> getRedemptionLogs(String familyId) {
-    return _repository.watchRedemptionLogs(familyId);
+    return _repository.watchRedemptionLog(familyId);
   }
 
   Future<RedemptionLogModel?> getRedemptionLogById(

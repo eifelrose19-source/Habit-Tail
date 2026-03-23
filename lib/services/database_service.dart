@@ -13,7 +13,7 @@ class DatabaseService {
 
   // Reference for the Families collection
   CollectionReference<FamilyModel> get families => _db
-      .collection('families')
+      .collection('Families')
       .withConverter<FamilyModel>(
         fromFirestore: (snapshot, _) => FamilyModel.fromFirestore(snapshot),
         toFirestore: (model, _) => model.toFirestore(),
@@ -21,7 +21,7 @@ class DatabaseService {
 
   // Reference for the Users collection
   CollectionReference<UserModel> get users => _db
-      .collection('users')
+      .collection('Users')
       .withConverter<UserModel>(
         fromFirestore: (snapshot, _) => UserModel.fromFirestore(snapshot),
         toFirestore: (model, _) => model.toFirestore(),
@@ -33,7 +33,7 @@ class DatabaseService {
   // Reference for Pets nested under a Family
   CollectionReference<PetModel> pets(String familyId) => families
       .doc(familyId)
-      .collection('pets')
+      .collection('Pets')
       .withConverter<PetModel>(
         fromFirestore: (snapshot, _) => PetModel.fromFirestore(snapshot),
         toFirestore: (model, _) => model.toFirestore(),
@@ -42,7 +42,7 @@ class DatabaseService {
   // Reference for Tasks nested under a Family
   CollectionReference<TaskModel> tasks(String familyId) => families
       .doc(familyId)
-      .collection('tasks')
+      .collection('Tasks')
       .withConverter<TaskModel>(
         fromFirestore: (snapshot, _) => TaskModel.fromFirestore(snapshot),
         toFirestore: (model, _) => model.toFirestore(),
@@ -51,7 +51,7 @@ class DatabaseService {
   // Reference for Rewards nested under a Family
   CollectionReference<RewardModel> rewards(String familyId) => families
       .doc(familyId)
-      .collection('rewards')
+      .collection('Rewards')
       .withConverter<RewardModel>(
         fromFirestore: (snapshot, _) => RewardModel.fromFirestore(snapshot),
         toFirestore: (model, _) => model.toFirestore(),
@@ -61,7 +61,7 @@ class DatabaseService {
   CollectionReference<PetVetInfoModel> vetInfo(String familyId, String petId) =>
       pets(familyId)
           .doc(petId)
-          .collection('vet_info')
+          .collection('Vet_info')
           .withConverter<PetVetInfoModel>(
             fromFirestore: (snapshot, _) =>
                 PetVetInfoModel.fromFirestore(snapshot),
