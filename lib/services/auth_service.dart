@@ -20,14 +20,34 @@ class AuthService {
     return _auth.currentUser != null;
   }
 
+  /// Refreshes the ID Token to fetch the latest Custom Claims (like family_id).
+  /// This is essential for the Security Rules to recognize the user's family.
+  Future<void> refreshFamilyToken() async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      // Force refresh to get the latest claims from the server
+      final tokenResult = await user.getIdTokenResult(true);
+      final claims = tokenResult.claims;
+
+      if (claims != null && claims.containsKey('family_id')) {
+        print("Success: family_id found in token: ${claims['family_id']}");
+      } else {
+        print("Debug: family_id is currently missing from token. Check Cloud Functions.");
+      }
+    }
+  }
+
   /// Sign in with email and password.
-  /// Checks if Firestore user record exists after sign in.
   Future<UserCredential> signIn(String email, String password) async {
     try {
       final credential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+      
+      // Refresh token on sign-in to ensure permissions are up to date
+      await refreshFamilyToken();
+      
       return credential;
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
@@ -35,7 +55,6 @@ class AuthService {
   }
 
   /// Sign up and create user document in Firestore.
-  /// Returns the created UserModel.
   Future<UserModel> signUpAndCreateUser({
     required String email,
     required String password,
@@ -44,7 +63,7 @@ class AuthService {
     required bool isParent,
   }) async {
     try {
-      // Create Firebase Auth account
+      // 1. Create Firebase Auth account
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
@@ -52,7 +71,7 @@ class AuthService {
 
       final userId = credential.user!.uid;
 
-      // Create UserModel
+      // 2. Create UserModel
       final newUser = UserModel(
         userId: userId,
         familyId: familyId,
@@ -61,11 +80,16 @@ class AuthService {
         isParent: isParent,
       );
 
-      // Create user document in Firestore
+      // 3. Create user document in Firestore
+      // This trigger the Cloud Function to set the Custom Claim
       await _userRepo.createUser(userId, newUser);
 
-      // Update Firebase Auth display name
+      // 4. Update Firebase Auth display name
       await credential.user!.updateDisplayName(name);
+
+      // 5. Wait briefly for Cloud Function and refresh token
+      await Future.delayed(const Duration(seconds: 2));
+      await refreshFamilyToken();
 
       return newUser;
     } on FirebaseAuthException catch (e) {
@@ -74,9 +98,6 @@ class AuthService {
   }
 
   /// Checks whether a Firestore user document exists for the current Auth user.
-  /// Call this after sign in to catch any missing records.
-  /// Returns false if the document is missing — use this to route the user
-  /// to a recovery or re-onboarding screen in your controller.
   Future<bool> userRecordExists() async {
     final userId = _auth.currentUser?.uid;
     if (userId == null) return false;
@@ -85,8 +106,6 @@ class AuthService {
   }
 
   /// Syncs the Firestore user document for the current Auth user.
-  /// Only creates the document if it is missing — safe to call on every sign in.
-  /// Use when you have the user's details available (e.g. from onboarding).
   Future<void> syncUserRecord({
     required String name,
     required String familyId,
@@ -97,10 +116,8 @@ class AuthService {
 
     final existingUser = await _userRepo.getUser(userId);
 
-    // Document already exists — nothing to do
     if (existingUser != null) return;
 
-    // Document missing — recreate it
     final newUser = UserModel(
       userId: userId,
       familyId: familyId,
@@ -110,6 +127,10 @@ class AuthService {
     );
 
     await _userRepo.createUser(userId, newUser);
+
+    // Wait for Cloud Function and refresh
+    await Future.delayed(const Duration(seconds: 2));
+    await refreshFamilyToken();
   }
 
   /// Sign out and clear user data
@@ -153,9 +174,7 @@ class AuthService {
     try {
       final userId = _auth.currentUser?.uid;
       if (userId != null) {
-        // Delete Firestore document first
         await _userRepo.deleteUser(userId);
-        // Then delete Auth account
         await _auth.currentUser?.delete();
       }
     } on FirebaseAuthException catch (e) {
@@ -163,7 +182,7 @@ class AuthService {
     }
   }
 
-  /// Re-authenticate user (required before sensitive operations)
+  /// Re-authenticate user
   Future<void> reauthenticate(String email, String password) async {
     try {
       final credential = EmailAuthProvider.credential(
