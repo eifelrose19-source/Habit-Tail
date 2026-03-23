@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:provider/provider.dart';
 import 'firebase_options.dart';
+import 'providers/auth_provider.dart';
+import 'providers/user_provider.dart';
+import 'providers/family_provider.dart';
+import 'providers/task_provider.dart';
+import 'providers/pet_provider.dart';
+import 'providers/reward_provider.dart';
+import 'providers/redemption_log_provider.dart';
+import 'theme/app_colors.dart';
 
 // Authenticated Screen Imports
 import 'screens/auth/splash_screen.dart';
@@ -23,21 +31,23 @@ void main() async {
   );
 
   runApp(
-    const ProviderScope(
-      child: HabitTailApp(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => FamilyProvider()),
+        ChangeNotifierProvider(create: (_) => TaskProvider()),
+        ChangeNotifierProvider(create: (_) => PetProvider()),
+        ChangeNotifierProvider(create: (_) => RewardProvider()),
+        ChangeNotifierProvider(create: (_) => RedemptionLogProvider()),
+      ],
+      child: const HabitTailApp(),
     ),
   );
 }
 
 class HabitTailApp extends StatelessWidget {
   const HabitTailApp({super.key});
-
-  // --- HabitTail Color Palette ---
-  static const Color softIris = Color(0xFFD0BFFF);      // Primary
-  static const Color blushPink = Color(0xFFFFADBC);     // Secondary
-  static const Color electricSky = Color(0xFF98E4FF);   // Accent
-  static const Color pureWhite = Color(0xFFFFFFFF);     // Surface
-  static const Color midnightPlum = Color(0xFF3F2E5A);  // Deep Text
 
   @override
   Widget build(BuildContext context) {
@@ -47,41 +57,41 @@ class HabitTailApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: softIris,
-          primary: softIris,
-          secondary: blushPink,
-          tertiary: electricSky,
-          surface: pureWhite,
-          onPrimary: midnightPlum,
-          onSecondary: midnightPlum,
-          onSurface: midnightPlum,
+          seedColor: AppColors.softIris,
+          primary: AppColors.softIris,
+          secondary: AppColors.blushPink,
+          tertiary: AppColors.electricSky,
+          surface: AppColors.pureWhite,
+          onPrimary: AppColors.midnightPlum,
+          onSecondary: AppColors.midnightPlum,
+          onSurface: AppColors.midnightPlum,
         ),
         fontFamily: 'Quicksand',
         textTheme: const TextTheme(
           displayLarge: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
-            color: midnightPlum,
+            color: AppColors.midnightPlum,
           ), // H1 (Hero)
           headlineMedium: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w600,
-            color: midnightPlum,
+            color: AppColors.midnightPlum,
           ), // H2 (Screen)
           bodyLarge: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: midnightPlum,
+            color: AppColors.midnightPlum,
           ), // Body (Main)
           labelLarge: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: midnightPlum,
+            color: AppColors.midnightPlum,
           ), // Button
           bodySmall: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: midnightPlum,
+            color: AppColors.midnightPlum,
           ), // Caption
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
@@ -95,7 +105,7 @@ class HabitTailApp extends StatelessWidget {
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: pureWhite,
+          fillColor: AppColors.pureWhite,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
@@ -145,7 +155,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) =>
             setState(() => _selectedIndex = index),
-        indicatorColor: const Color(0xFFD0BFFF).withValues(alpha: 0.3),
+        indicatorColor: AppColors.softIris.withValues(alpha: 0.3),
         destinations: const [
           NavigationDestination(
               icon: Icon(Icons.home_rounded), label: 'Home'),

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/family_model.dart';
+import 'dart:developer' as developer;
 
 const int kMaxParents = 1;
 const int kMaxChildren = 3;
@@ -66,6 +67,7 @@ class FamilyService {
     if (role == FamilyRole.parent) return parentCount < kMaxParents;
     if (role == FamilyRole.child) return childCount < kMaxChildren;
 
+    developer.log('Unknown role: $role', name: 'FamilyService');
     return false;
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,7 +12,9 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -111,10 +114,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   //Log In Button
                   _buildPrimaryButton(
                     label: 'Log In',
-                    onTap: () {
-                      //ToDo: Add authentication logic here
-                      Navigator.pushNamed(context, '/create-or-join-family');
-                    },
+                    onTap: _isLoading ? null : _handleLogin,
+                    isLoading: _isLoading,
                   ),
                   const SizedBox(height: 32),
 
@@ -200,6 +201,47 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Future<void> _handleLogin() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please enter email and password',
+              style: GoogleFonts.quicksand()),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await _authService.signIn(email, password);
+      if (mounted) {
+        final exists = await _authService.userRecordExists();
+        if (exists) {
+          Navigator.pushReplacementNamed(context, '/home');
+        } else {
+          Navigator.pushReplacementNamed(context, '/create-or-join-family');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString(), style: GoogleFonts.quicksand()),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   // --- INPUT FIELD WIDGET ---
   Widget _buildInputField({
     required TextEditingController controller,
@@ -253,7 +295,8 @@ class _LoginScreenState extends State<LoginScreen> {
   // --- PRIMARY BUTTON WIDGET ---
   Widget _buildPrimaryButton({
     required String label,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
+    bool isLoading = false,
   }) {
     return SizedBox(
       height: 52,
@@ -267,14 +310,23 @@ class _LoginScreenState extends State<LoginScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: Text(
-          label,
-          style: GoogleFonts.quicksand(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF3F2E5A),
-          ),
-        ),
+        child: isLoading
+            ? const SizedBox(
+                height: 24,
+                width: 24,
+                child: CircularProgressIndicator(
+                  color: Color(0xFF3F2E5A),
+                  strokeWidth: 2.5,
+                ),
+              )
+            : Text(
+                label,
+                style: GoogleFonts.quicksand(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF3F2E5A),
+                ),
+              ),
       ),
     );
   }

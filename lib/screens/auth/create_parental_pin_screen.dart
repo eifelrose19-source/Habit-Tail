@@ -1,21 +1,53 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:habit_tail/screens/auth/manage_family_screen.dart'; 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:habit_tail/screens/auth/manage_family_screen.dart';
 
-class CreateParentalPin extends StatelessWidget {
-  const CreateParentalPin({super.key}); 
-
-  // --- Color Palette for HabitTail ---
-  static const Color softIris = Color(0xFFD0BFFF);      // Primary Background
-  static const Color electricSky = Color(0xFF98E4FF);   // Button Background
-  static const Color midnightPlum = Color(0xFF3F2E5A);  // Text Color 
-
-  // Add your family code/pin here
-  static const String familyCode = "1234"; // Replace with actual generated PIN
+class CreateParentalPin extends StatefulWidget {
+  const CreateParentalPin({super.key});
 
   @override
-  Widget build(BuildContext context) {  // Added missing opening brace
+  State<CreateParentalPin> createState() => _CreateParentalPinState();
+}
+
+class _CreateParentalPinState extends State<CreateParentalPin> {
+  // --- Color Palette for HabitTail ---
+  static const Color softIris = Color(0xFFD0BFFF);
+  static const Color electricSky = Color(0xFF98E4FF);
+  static const Color midnightPlum = Color(0xFF3F2E5A);
+
+  String _generatedPin = '';
+  bool _pinCreated = false;
+
+  /// Generates a random 4-digit PIN
+  String _generatePin() {
+    final random = Random.secure();
+    return List.generate(4, (_) => random.nextInt(10)).join();
+  }
+
+  /// Saves the PIN to Firestore under the current user's family
+  Future<void> _createAndSavePin() async {
+    final pin = _generatePin();
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    // Store pin hash in user's document
+    await FirebaseFirestore.instance
+        .collection('Users')
+        .doc(user.uid)
+        .update({'Parental_pin': pin});
+
+    setState(() {
+      _generatedPin = pin;
+      _pinCreated = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -59,14 +91,14 @@ class CreateParentalPin extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: midnightPlum.withAlpha(26), // Fixed: 0.1 * 255 ≈ 26
+                        color: midnightPlum.withAlpha(26),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
                     ],
                   ),
                   child: Text(
-                    familyCode,
+                    _pinCreated ? _generatedPin : '----',
                     style: GoogleFonts.quicksand(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -90,16 +122,22 @@ class CreateParentalPin extends StatelessWidget {
                 // --- CREATE PIN BUTTON ---
                 _buildButton(
                   context: context,
-                  label: "Create Pin",
-                  onTap: () {
-                    Clipboard.setData(ClipboardData(text: familyCode)).then((_) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Family code copied to clipboard!"),
-                          backgroundColor: midnightPlum,
-                        ),
-                      );
-                    });
+                  label: _pinCreated ? "Copy Pin" : "Create Pin",
+                  onTap: () async {
+                    if (!_pinCreated) {
+                      await _createAndSavePin();
+                    }
+                    if (_pinCreated) {
+                      await Clipboard.setData(ClipboardData(text: _generatedPin));
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("PIN copied to clipboard! Share with your partner."),
+                            backgroundColor: midnightPlum,
+                          ),
+                        );
+                      }
+                    }
                   },
                 ), 
 

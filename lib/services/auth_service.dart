@@ -29,11 +29,7 @@ class AuthService {
       final tokenResult = await user.getIdTokenResult(true);
       final claims = tokenResult.claims;
 
-      if (claims != null && claims.containsKey('family_id')) {
-        print("Success: family_id found in token: ${claims['family_id']}");
-      } else {
-        print("Debug: family_id is currently missing from token. Check Cloud Functions.");
-      }
+      // Claims are refreshed; family_id will be available if set by Cloud Functions.
     }
   }
 
@@ -151,10 +147,10 @@ class AuthService {
     }
   }
 
-  /// Update user email
+  /// Update user email (sends verification to new email first)
   Future<void> updateEmail(String newEmail) async {
     try {
-      await _auth.currentUser?.updateEmail(newEmail);
+      await _auth.currentUser?.verifyBeforeUpdateEmail(newEmail);
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     }

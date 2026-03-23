@@ -22,7 +22,7 @@ class UserRepository {
   Stream<List<UserModel>> watchFamilyMembers(String familyId) {
     return _firestore
         .collection('Users')
-        .where('familyId', isEqualTo: familyId)
+        .where('Family_id', isEqualTo: familyId)
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => UserModel.fromFirestore(doc))
@@ -87,7 +87,7 @@ class UserRepository {
     try {
       final snapshot = await _firestore
           .collection('Users')
-          .where('familyId', isEqualTo: familyId)
+          .where('Family_id', isEqualTo: familyId)
           .get();
       return snapshot.docs
           .map((doc) => UserModel.fromFirestore(doc))
@@ -102,8 +102,8 @@ class UserRepository {
     try {
       final snapshot = await _firestore
           .collection('Users')
-          .where('familyId', isEqualTo: familyId)
-          .where('isParent', isEqualTo: false)
+          .where('Family_id', isEqualTo: familyId)
+          .where('Is_parent', isEqualTo: false)
           .get();
       return snapshot.docs
           .map((doc) => UserModel.fromFirestore(doc))
@@ -118,7 +118,7 @@ class UserRepository {
   Future<void> addPoints(String userId, int points) async {
     try {
       await _firestore.collection('Users').doc(userId).update({
-        'totalPoints': FieldValue.increment(points),
+        'Total_points': FieldValue.increment(points),
       });
     } catch (e) {
       rethrow;

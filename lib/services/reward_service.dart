@@ -41,53 +41,51 @@ class RewardService {
   }
 
   /// Redeems a reward for a user — checks points, deducts cost,
-  /// and creates a redemption log in a single atomic batch.
+  /// and creates a redemption log in a single atomic transaction.
   Future<void> redeemReward(
       String familyId, String rewardId, String userId) async {
-    // Step 1: Get the reward
-    final rewardDoc = await _db
+    final rewardRef = _db
         .collection('Families')
         .doc(familyId)
         .collection('Rewards')
-        .doc(rewardId)
-        .get();
-
-    if (!rewardDoc.exists) throw Exception('Reward not found');
-
-    final reward = rewardDoc.data() as Map<String, dynamic>;
-    final int cost = reward['pointCost'] ?? 0;
-
-    // Step 2: Get the user's current points
-    final userDoc = await _db.collection('Users').doc(userId).get();
-    if (!userDoc.exists) throw Exception('User not found');
-
-    final int currentPoints = userDoc.data()?['totalPoints'] ?? 0;
-
-    // Step 3: Check if user can afford it
-    if (currentPoints < cost) throw Exception('Not enough points');
-
-    // Step 4: Run point deduction and redemption log atomically
-    final batch = _db.batch();
-
-    // Deduct points from user
+        .doc(rewardId);
     final userRef = _db.collection('Users').doc(userId);
-    batch.update(userRef, {'totalPoints': FieldValue.increment(-cost)});
 
-    // Create redemption log entry
-    final logRef = _db
-        .collection('Families')
-        .doc(familyId)
-        .collection('RedemptionLog')
-        .doc();
+    await _db.runTransaction((transaction) async {
+      // Read both documents inside the transaction for consistency
+      final rewardDoc = await transaction.get(rewardRef);
+      if (!rewardDoc.exists) throw Exception('Reward not found');
 
-    batch.set(logRef, {
-      'rewardId': rewardId,
-      'rewardName': reward['name'],
-      'userId': userId,
-      'pointCost': cost,
-      'redeemedAt': FieldValue.serverTimestamp(),
+      final userDoc = await transaction.get(userRef);
+      if (!userDoc.exists) throw Exception('User not found');
+
+      final reward = rewardDoc.data() as Map<String, dynamic>;
+      final int cost = int.tryParse(
+              (reward['Reward_price'] ?? '0').toString()) ??
+          0;
+      final int currentPoints =
+          (userDoc.data()?['Total_points'] as num?)?.toInt() ?? 0;
+
+      if (currentPoints < cost) throw Exception('Not enough points');
+
+      // Deduct points from user
+      transaction.update(userRef, {
+        'Total_points': FieldValue.increment(-cost),
+      });
+
+      // Create redemption log entry
+      final logRef = _db
+          .collection('Families')
+          .doc(familyId)
+          .collection('RedemptionLog')
+          .doc();
+
+      transaction.set(logRef, {
+        'Claimed_by': userId,
+        'Reward_id': rewardId,
+        'Reward_Timestamp': FieldValue.serverTimestamp(),
+        'Status': 'Approved',
+      });
     });
-
-    await batch.commit();
   }
 }

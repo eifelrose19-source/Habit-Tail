@@ -31,7 +31,7 @@ class TaskService {
       }
       return snapshot;
     } catch (e) {
-      print('[TaskService] _getVerifiedTask failed: $e');
+      // Error in _getVerifiedTask
       rethrow;
     }
   }
@@ -46,9 +46,11 @@ class TaskService {
           .doc(userId)
           .get();
 
-      return (userSnapshot.data())?['Role'] as String?;
+      final data = userSnapshot.data();
+      final bool isParent = data?['Is_parent'] ?? false;
+      return isParent ? 'Parent' : 'Child';
     } catch (e) {
-      print('[TaskService] _getCurrentUserRole failed: $e');
+      // Error in _getCurrentUserRole
       rethrow;
     }
   }
@@ -89,15 +91,17 @@ class TaskService {
           .doc(familyId)
           .collection('Tasks')
           .add({
-            'name': name,
-            'points': clampedPoints,
-            'assignedTo': assignedTo,
-            'createdBy': userId,
+            'Title': name,
+            'Points': clampedPoints,
+            'Assigned_to': assignedTo,
+            'Created_by': userId,
+            'Family_id': familyId,
+            'Frequency': 'once',
             'status': 'pending',
             'createdAt': FieldValue.serverTimestamp(),
           });
     } catch (e) {
-      print('[TaskService] createTask failed: $e');
+      // Error in createTask
       rethrow;
     }
   }
@@ -114,7 +118,7 @@ class TaskService {
       final taskSnapshot = await _getVerifiedTask(familyId, taskId);
       final data = taskSnapshot.data() as Map<String, dynamic>?;
 
-      if (data?['assignedTo'] != userId) {
+      if (data?['Assigned_to'] != userId) {
         throw Exception('You are not assigned to this task.');
       }
 
@@ -130,7 +134,7 @@ class TaskService {
         'submittedAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {
-      print('[TaskService] submitTaskCompletion failed: $e');
+      // Error in submitTaskCompletion
       rethrow;
     }
   }
@@ -167,12 +171,12 @@ class TaskService {
           );
         }
 
-        final String? assignedTo = data?['assignedTo'] as String?;
+        final String? assignedTo = data?['Assigned_to'] as String?;
         if (assignedTo == null) {
           throw Exception('Task has no assigned user.');
         }
 
-        final int points = (data?['points'] as int? ?? _minPointsPerTask)
+        final int points = ((data?['Points'] as num?)?.toInt() ?? _minPointsPerTask)
             .clamp(_minPointsPerTask, _maxPointsPerTask);
 
         final userRef = _db.collection('Users').doc(assignedTo);
@@ -189,7 +193,7 @@ class TaskService {
         });
       });
     } catch (e) {
-      print('[TaskService] approveTask failed: $e');
+      // Error in approveTask
       rethrow;
     }
   }
@@ -208,7 +212,7 @@ class TaskService {
       await _getVerifiedTask(familyId, taskId);
       await _taskRef(familyId, taskId).update(data);
     } catch (e) {
-      print('[TaskService] updateTask failed: $e');
+      // Error in updateTask
       rethrow;
     }
   }
