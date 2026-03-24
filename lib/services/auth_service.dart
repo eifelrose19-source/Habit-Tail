@@ -151,8 +151,8 @@ class AuthService {
     try {
       final userId = _auth.currentUser?.uid;
       if (userId != null) {
-        // You'll need to add a delete method to UserService or 
-        // handle the Firestore delete here manually
+        // Corrected: Now calls the specific method in UserService
+        await _userService.deleteUserProfile(userId);
         await _auth.currentUser?.delete();
       }
     } on FirebaseAuthException catch (e) {

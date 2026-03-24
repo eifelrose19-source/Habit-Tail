@@ -4,7 +4,6 @@ class UserService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   /// One-time fetch of a user's profile data from the root collection.
-  /// For live updates use UserRepository.watchUser() instead.
   Future<Map<String, dynamic>?> getUserProfile(String userId) async {
     final doc = await _db.collection('users').doc(userId).get();
     return doc.data();
@@ -17,5 +16,11 @@ class UserService {
         .collection('users')
         .doc(userId)
         .set(data, SetOptions(merge: true));
+  }
+
+  /// Deletes the user profile document from Firestore.
+  /// Used during account deletion to maintain database cleanliness.
+  Future<void> deleteUserProfile(String userId) async {
+    await _db.collection('users').doc(userId).delete();
   }
 }
