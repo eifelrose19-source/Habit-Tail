@@ -1,65 +1,66 @@
-
 import '../models/redemption_log_model.dart';
 import '../repositories/redemption_log_repository.dart';
 
 class RedemptionService {
   final RedemptionLogRepository _repository = RedemptionLogRepository();
 
+  /// Streams logs for the family
   Stream<List<RedemptionLogModel>> getRedemptionLogs(String familyId) {
     return _repository.watchRedemptionLogs(familyId);
   }
 
-  Future<RedemptionLogModel?> getRedemptionLogById(
-      String familyId, String logId) async {
-    return await _repository.getRedemptionLog(familyId, logId);
+  /// Fetches a single log using the unique document ID
+  Future<RedemptionLogModel?> getRedemptionLogById(String logId) async {
+    return await _repository.getRedemptionLog(logId);
   }
 
-  Future<void> addRedemptionLog(
-      String familyId, RedemptionLogModel log) async {
-    await _repository.createRedemptionLog(familyId, log);
+  /// Adds a new log to the top-level collection
+  Future<void> addRedemptionLog(RedemptionLogModel log) async {
+    await _repository.createRedemptionLog(log);
   }
 
-  Future<void> updateRedemptionLog(
-      String familyId, String logId, Map<String, dynamic> data) async {
-    await _repository.updateRedemptionLog(familyId, logId, data);
+  /// Updates status or details using the doc ID
+  Future<void> updateRedemptionLog(String logId, Map<String, dynamic> data) async {
+    await _repository.updateRedemptionLog(logId, data);
   }
 
-  Future<void> deleteRedemptionLog(String familyId, String logId) async {
-    await _repository.deleteRedemptionLog(familyId, logId);
+  /// Deletes a log entry directly
+  Future<void> deleteRedemptionLog(String logId) async {
+    await _repository.deleteRedemptionLog(logId);
   }
 
-  // Helper method to create a redemption log
+  /// Logic for a child to claim a reward
   Future<void> redeemReward({
     required String familyId,
     required String claimedBy,
     required String rewardId,
-    String status = 'Pending Approval',
+    String status = 'pending', 
   }) async {
     final log = RedemptionLogModel(
-      logId: '', // Firestore will auto-generate this
+      logId: '', 
+      familyId: familyId, 
       claimedBy: claimedBy,
       rewardTimestamp: DateTime.now(),
       rewardId: rewardId,
       status: status,
     );
-    await _repository.createRedemptionLog(familyId, log);
+    await _repository.createRedemptionLog(log);
   }
 
-  // Helper method to approve a redemption
-  Future<void> approveRedemption(String familyId, String logId) async {
+  /// Logic for a parent to approve a request
+  Future<void> approveRedemption(String logId) async {
     await _repository.updateRedemptionLog(
-      familyId,
       logId,
-      {'Status': 'Approved'},
+      {'status': 'approved'},
     );
   }
 
-  // Helper method to reject a redemption
-  Future<void> rejectRedemption(String familyId, String logId) async {
+  /// Logic for a parent to reject a request
+  Future<void> rejectRedemption(String logId) async {
     await _repository.updateRedemptionLog(
-      familyId,
       logId,
-      {'Status': 'Rejected'},
+      {'status': 'rejected'}, 
     );
   }
 }
+
