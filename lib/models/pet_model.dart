@@ -1,13 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PetModel {
-  final String petId; // Document ID
+  final String petId;
   final String familyId;
   final String name;
   final String breed;
   final String gender;
   final int age;
   final String type;
+  final String petMeds;
+  final String vetNumber;
+  final String vetOffice;
+  final String veterinarian;
+  final String petLicense;
 
   PetModel({
     required this.petId,
@@ -17,36 +22,51 @@ class PetModel {
     required this.gender,
     required this.age,
     required this.type,
+    required this.petMeds,
+    required this.vetNumber,
+    required this.vetOffice,
+    required this.veterinarian,
+    required this.petLicense,
   });
 
-  /// Factory constructor using DocumentSnapshot to handle ID and data at once
+  /// Factory constructor to create a PetModel from Firestore
   factory PetModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};
 
     return PetModel(
       petId: doc.id,
-      familyId: data['Family_id'] ?? "",
-      name: data['Name'] ?? "",
-      breed: data['Breed'] ?? "",
-      gender: data['Gender'] ?? "",
-      age: (data['Age'] as num?)?.toInt() ?? 0, // Handles int/double safely
-      type: data['Type'] ?? "",
+      familyId: data['family_id'] ?? "",
+      name: data['name'] ?? "",
+      breed: data['breed'] ?? "",
+      gender: data['gender'] ?? "",
+      age: (data['age'] as num?)?.toInt() ?? 0,
+      type: data['type'] ?? "",
+      petMeds: data['pet_meds'] ?? "",
+      vetNumber: data['vet_number'] ?? "",
+      vetOffice: data['vet_office'] ?? "",
+      veterinarian: data['veterinarian'] ?? "",
+      petLicense: data['pet_license'] ?? "",
     );
   }
 
-  /// Converts model to Map for Firestore using your specific PascalCase keys
+  /// Converts the PetModel to a Map for saving to Firestore
   Map<String, dynamic> toFirestore() {
     return {
-      'Family_id': familyId,
-      'Name': name,
-      'Breed': breed,
-      'Gender': gender,
-      'Age': age,
-      'Type': type,
+      'family_id': familyId,
+      'name': name,
+      'breed': breed,
+      'gender': gender,
+      'age': age,
+      'type': type,
+      'pet_meds': petMeds,
+      'vet_number': vetNumber,
+      'vet_office': vetOffice,
+      'veterinarian': veterinarian,
+      'pet_license': petLicense,
     };
   }
 
-  /// Returns a new instance with updated fields for easier state management
+  /// CopyWith for Riverpod state management updates
   PetModel copyWith({
     String? petId,
     String? familyId,
@@ -55,6 +75,11 @@ class PetModel {
     String? gender,
     int? age,
     String? type,
+    String? petMeds,
+    String? vetNumber,
+    String? vetOffice,
+    String? veterinarian,
+    String? petLicense,
   }) {
     return PetModel(
       petId: petId ?? this.petId,
@@ -64,88 +89,23 @@ class PetModel {
       gender: gender ?? this.gender,
       age: age ?? this.age,
       type: type ?? this.type,
+      petMeds: petMeds ?? this.petMeds,
+      vetNumber: vetNumber ?? this.vetNumber,
+      vetOffice: vetOffice ?? this.vetOffice,
+      veterinarian: veterinarian ?? this.veterinarian,
+      petLicense: petLicense ?? this.petLicense,
     );
   }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-
-    return other is PetModel &&
-        other.petId == petId &&
-        other.familyId == familyId &&
-        other.name == name &&
-        other.breed == breed &&
-        other.gender == gender &&
-        other.age == age &&
-        other.type == type;
+    return other is PetModel && other.petId == petId;
   }
 
   @override
-  int get hashCode {
-    return Object.hash(petId, familyId, name, breed, gender, age, type);
-  }
+  int get hashCode => petId.hashCode;
 
   @override
-  String toString() {
-    return 'PetModel(petId: $petId, familyId: $familyId, name: $name, breed: $breed, gender: $gender, age: $age, type: $type)';
-  }
-
-  /// Compatibility factory used by older repositories expecting `fromMap`
-  factory PetModel.fromMap(Map<String, dynamic> map, String id) {
-    final rawAge = map['Age'] ?? map['age'];
-    int parsedAge = 0;
-    if (rawAge is num) {
-      parsedAge = rawAge.toInt();
-    } else if (rawAge is String) {
-      parsedAge = int.tryParse(rawAge) ?? 0;
-    }
-
-    return PetModel(
-      petId: id,
-      familyId: map['Family_id'] ?? "",
-      name: map['Name'] ?? map['name'] ?? "",
-      breed: map['Breed'] ?? map['breed'] ?? "",
-      gender: map['Gender'] ?? map['gender'] ?? "",
-      age: parsedAge,
-      type: map['Type'] ?? map['type'] ?? "",
-    );
-  }
-}
-
-extension PetModelCompat on PetModel {
-  String get id => petId;
-
-  Map<String, dynamic> toMap() => toFirestore();
-}
-
-/// Backwards-compatible `Pet` shape used by older tests and code.
-class Pet {
-  final String id;
-  final String name;
-  final String breed;
-  final String gender;
-  final int age;
-  final String type;
-
-  Pet({
-    required this.id,
-    required this.name,
-    required this.breed,
-    required this.gender,
-    required this.age,
-    required this.type,
-  });
-
-  factory Pet.fromMap(String id, Map<String, dynamic> map) {
-    final model = PetModel.fromMap(map, id);
-    return Pet(
-      id: model.petId,
-      name: model.name,
-      breed: model.breed,
-      gender: model.gender,
-      age: model.age,
-      type: model.type,
-    );
-  }
+  String toString() => 'PetModel(name: $name, type: $type)';
 }
