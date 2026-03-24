@@ -3,23 +3,21 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class PetService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  Stream<QuerySnapshot> getPetStream(String familyId) {
+  /// Returns a stream of pet documents filtered by the family_id field.
+  Stream<QuerySnapshot<Map<String, dynamic>>> getPetStream(String familyId) {
     return _db
-        .collection('Families')
-        .doc(familyId)
-        .collection('Pets')
+        .collection('pets')
+        .where('family_id', isEqualTo: familyId)
         .snapshots();
   }
 
+  /// Updates a specific pet document using its unique ID in the top-level collection.
   Future<void> updatePetRaw(
-    String familyId,
     String petId,
     Map<String, dynamic> data,
   ) {
     return _db
-        .collection('Families')
-        .doc(familyId)
-        .collection('Pets')
+        .collection('pets')
         .doc(petId)
         .update(data);
   }
