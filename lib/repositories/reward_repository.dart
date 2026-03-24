@@ -4,52 +4,41 @@ import '../models/reward_model.dart';
 class RewardRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  /// Streams rewards for a family, filtered by family_id
   Stream<List<RewardModel>> watchRewards(String familyId) {
     return _firestore
-        .collection('Families')
-        .doc(familyId)
-        .collection('Rewards')
+        .collection('rewards')
+        .where('family_id', isEqualTo: familyId)
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => RewardModel.fromFirestore(doc))
             .toList());
   }
 
-  Future<RewardModel?> getReward(String familyId, String rewardId) async {
-    final doc = await _firestore
-        .collection('Families')
-        .doc(familyId)
-        .collection('Rewards')
-        .doc(rewardId)
-        .get();
+  /// Gets a single reward by its unique document ID
+  Future<RewardModel?> getReward(String rewardId) async {
+    final doc = await _firestore.collection('rewards').doc(rewardId).get();
     if (!doc.exists) return null;
     return RewardModel.fromFirestore(doc);
   }
 
-  Future<void> createReward(String familyId, RewardModel reward) async {
+  /// Adds a new reward to the top-level rewards collection
+  Future<void> createReward(RewardModel reward) async {
     await _firestore
-        .collection('Families')
-        .doc(familyId)
-        .collection('Rewards')
+        .collection('rewards')
         .add(reward.toFirestore());
   }
 
-  Future<void> updateReward(
-      String familyId, String rewardId, Map<String, dynamic> data) async {
+  /// Updates reward details using only the document ID
+  Future<void> updateReward(String rewardId, Map<String, dynamic> data) async {
     await _firestore
-        .collection('Families')
-        .doc(familyId)
-        .collection('Rewards')
+        .collection('rewards')
         .doc(rewardId)
         .update(data);
   }
 
-  Future<void> deleteReward(String familyId, String rewardId) async {
-    await _firestore
-        .collection('Families')
-        .doc(familyId)
-        .collection('Rewards')
-        .doc(rewardId)
-        .delete();
+  /// Deletes a reward document
+  Future<void> deleteReward(String rewardId) async {
+    await _firestore.collection('rewards').doc(rewardId).delete();
   }
 }
