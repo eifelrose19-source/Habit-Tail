@@ -81,8 +81,8 @@ class AuthService {
       );
 
       // 3. Create user document in Firestore
-      // This trigger the Cloud Function to set the Custom Claim
-      await _userRepo.createUser(userId, newUser);
+      // Uses the userId as the document ID in the 'users' collection
+      await _userRepo.setUser(userId, newUser);
 
       // 4. Update Firebase Auth display name
       await credential.user!.updateDisplayName(name);
@@ -126,7 +126,7 @@ class AuthService {
       isParent: isParent,
     );
 
-    await _userRepo.createUser(userId, newUser);
+    await _userRepo.setUser(userId, newUser);
 
     // Wait for Cloud Function and refresh
     await Future.delayed(const Duration(seconds: 2));
