@@ -4,54 +4,42 @@ import '../models/redemption_log_model.dart';
 class RedemptionLogRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Stream<List<RedemptionLogModel>> watchRedemptionLog(String familyId) {
+  /// Streams logs for the family, filtered by the family_id field
+  Stream<List<RedemptionLogModel>> watchRedemptionLogs(String familyId) {
     return _firestore
-        .collection('Families')
-        .doc(familyId)
-        .collection('Redemption Logs')
+        .collection('redemption_log')
+        .where('family_id', isEqualTo: familyId)
+        .orderBy('timestamp', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => RedemptionLogModel.fromFirestore(doc))
             .toList());
   }
 
-  Future<RedemptionLogModel?> getRedemptionLog(
-      String familyId, String logId) async {
-    final doc = await _firestore
-        .collection('Families')
-        .doc(familyId)
-        .collection('Redemption Logs')
-        .doc(logId)
-        .get();
+  /// Gets a single log by its ID
+  Future<RedemptionLogModel?> getRedemptionLog(String logId) async {
+    final doc = await _firestore.collection('redemption_log').doc(logId).get();
     if (!doc.exists) return null;
     return RedemptionLogModel.fromFirestore(doc);
   }
 
-  Future<void> createRedemptionLog(
-      String familyId, RedemptionLogModel log) async {
+  /// Adds a new log to the top-level collection
+  Future<void> createRedemptionLog(RedemptionLogModel log) async {
     await _firestore
-        .collection('Families')
-        .doc(familyId)
-        .collection('Redemption Logs')
+        .collection('redemption_log')
         .add(log.toFirestore());
   }
 
-  Future<void> updateRedemptionLog(
-      String familyId, String logId, Map<String, dynamic> data) async {
+  /// Updates status or other fields using the doc ID directly
+  Future<void> updateRedemptionLog(String logId, Map<String, dynamic> data) async {
     await _firestore
-        .collection('Families')
-        .doc(familyId)
-        .collection('Redemption Logs')
+        .collection('redemption_log')
         .doc(logId)
         .update(data);
   }
 
-  Future<void> deleteRedemptionLog(String familyId, String logId) async {
-    await _firestore
-        .collection('Families')
-        .doc(familyId)
-        .collection('Redemption Logs')
-        .doc(logId)
-        .delete();
+  /// Deletes a log entry
+  Future<void> deleteRedemptionLog(String logId) async {
+    await _firestore.collection('redemption_log').doc(logId).delete();
   }
 }
