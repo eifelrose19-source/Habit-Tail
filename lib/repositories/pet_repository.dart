@@ -1,38 +1,22 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/pet_model.dart';
-import '../services/pet_service.dart';
 
 class PetRepository {
-  final PetService _service = PetService();
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  /// Live stream of all pets in a family — screens should use this
-  /// to stay in sync with Firestore changes automatically.
+  /// Streams pets for a specific family
   Stream<List<PetModel>> watchPets(String familyId) {
-    return _service.getPetStream(familyId).map((snapshot) {
-      return snapshot.docs
-          .map((doc) => PetModel.fromMap(doc.data(), doc.id))
-          .toList();
-    });
+    return _db
+        .collection('pets')
+        .where('family_id', isEqualTo: familyId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => PetModel.fromFirestore(doc))
+            .toList());
   }
 
-  /// One-time fetch of a single pet — use for checks, not live screens.
-  Future<PetModel?> getPet(String familyId, String petId) async {
-    final doc = await _service.getPetDoc(familyId, petId);
-    if (!doc.exists) return null;
-    return PetModel.fromMap(doc.data()!, doc.id);
-  }
-
-  /// Creates a new pet document in Firestore.
-  Future<void> createPet(String familyId, PetModel pet) {
-    return _service.createPet(familyId, pet.id, pet.toMap());
-  }
-
-  /// Updates an existing pet document in Firestore.
-  Future<void> updatePet(String familyId, PetModel pet) {
-    return _service.updatePetRaw(familyId, pet.id, pet.toMap());
-  }
-
-  /// Deletes a pet document from Firestore.
-  Future<void> deletePet(String familyId, String petId) {
-    return _service.deletePet(familyId, petId);
+  /// Updates pet info (like meds or vet info)
+  Future<void> updatePet(String petId, Map<String, dynamic> data) async {
+    await _db.collection('pets').doc(petId).update(data);
   }
 }
