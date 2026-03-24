@@ -4,7 +4,7 @@ import '../repositories/redemption_log_repository.dart';
 class RedemptionService {
   final RedemptionLogRepository _repository = RedemptionLogRepository();
 
-  /// Streams logs for the family
+  /// Streams logs for the family filtered by familyId
   Stream<List<RedemptionLogModel>> getRedemptionLogs(String familyId) {
     return _repository.watchRedemptionLogs(familyId);
   }
@@ -30,20 +30,26 @@ class RedemptionService {
   }
 
   /// Logic for a child to claim a reward
+  /// Matches the flat database structure where every log has a familyId
   Future<void> redeemReward({
     required String familyId,
     required String claimedBy,
     required String rewardId,
+    required int cost,
+    required String parentId,
     String status = 'pending', 
   }) async {
     final log = RedemptionLogModel(
-      logId: '', 
+      logId: '', // Firestore generates this ID on create
       familyId: familyId, 
       claimedBy: claimedBy,
-      rewardTimestamp: DateTime.now(),
+      timestamp: DateTime.now(), // Fixed: Use 'timestamp' to match Model
       rewardId: rewardId,
       status: status,
+      cost: cost,
+      parentId: parentId,
     );
+    
     await _repository.createRedemptionLog(log);
   }
 
@@ -63,4 +69,3 @@ class RedemptionService {
     );
   }
 }
-
