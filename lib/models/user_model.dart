@@ -8,6 +8,8 @@ class UserModel {
   final String name;
   final int totalPoints;
   final bool isParent;
+  final String? parentId; // Added for child link
+  final List<String> childrenIds; // Added for parent link
 
   UserModel({
     required this.userId,
@@ -15,41 +17,49 @@ class UserModel {
     required this.name,
     required this.totalPoints,
     required this.isParent,
+    this.parentId,
+    this.childrenIds = const [],
   });
 
-  /// Factory constructor using DocumentSnapshot to handle ID and data at once
+  /// Factory constructor 
   factory UserModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};
 
     return UserModel(
       userId: doc.id,
-      familyId: data['Family_id'] ?? "",
-      name: data['Name'] ?? "",
-      totalPoints: (data['Total_points'] as num?)?.toInt() ?? 0,
-      isParent: data['Is_parent'] ?? false, // Add this field
+      familyId: data['family_id'] ?? "",
+      name: data['name'] ?? "",
+      totalPoints: (data['total_points'] as num?)?.toInt() ?? 0,
+      isParent: data['is_parent'] ?? false,
+      parentId: data['parent_id'],
+      childrenIds: List<String>.from(data['children_ids'] ?? []),
     );
   }
 
-  /// Converts model to Map for Firestore using HabitTail specific PascalCase keys
+  /// Converts model to Map for Firestore 
   Map<String, dynamic> toFirestore() {
     return {
-      'Family_id': familyId,
-      'Name': name,
-      'Total_points': totalPoints,
-      'Is_parent': isParent, // Add this field
+      'family_id': familyId,
+      'name': name,
+      'total_points': totalPoints,
+      'is_parent': isParent,
+      if (parentId != null) 'parent_id': parentId,
+      'children_ids': childrenIds,
     };
   }
 
   /// Getter to determine dashboard type based on role
   DashboardType get dashboardType => isParent ? DashboardType.parent : DashboardType.child;
 
-  /// Returns a new instance with updated fields for easier state management
+  /// Returns a new instance with updated fields for Riverpod state management
   UserModel copyWith({
     String? userId,
     String? familyId,
     String? name,
     int? totalPoints,
     bool? isParent,
+    String? parentId,
+    List<String>? childrenIds,
   }) {
     return UserModel(
       userId: userId ?? this.userId,
@@ -57,28 +67,23 @@ class UserModel {
       name: name ?? this.name,
       totalPoints: totalPoints ?? this.totalPoints,
       isParent: isParent ?? this.isParent,
+      parentId: parentId ?? this.parentId,
+      childrenIds: childrenIds ?? this.childrenIds,
     );
   }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-
-    return other is UserModel &&
-        other.userId == userId &&
-        other.familyId == familyId &&
-        other.name == name &&
-        other.totalPoints == totalPoints &&
-        other.isParent == isParent;
+    return other is UserModel && other.userId == userId;
   }
 
   @override
-  int get hashCode {
-    return Object.hash(userId, familyId, name, totalPoints, isParent);
-  }
+  int get hashCode => userId.hashCode;
 
   @override
   String toString() {
-    return 'UserModel(userId: $userId, familyId: $familyId, name: $name, totalPoints: $totalPoints, isParent: $isParent)';
+    return 'UserModel(name: $name, isParent: $isParent, points: $totalPoints)';
   }
 }
+
