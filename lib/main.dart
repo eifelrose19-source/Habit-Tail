@@ -16,7 +16,7 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Enable Firestore offline persistence with unlimited cache size
+  // Enable Firestore offline persistence
   FirebaseFirestore.instance.settings = const Settings(
     persistenceEnabled: true,
     cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
@@ -32,12 +32,12 @@ void main() async {
 class HabitTailApp extends StatelessWidget {
   const HabitTailApp({super.key});
 
-  // --- HabitTail Color Palette ---
-  static const Color softIris = Color(0xFFD0BFFF);      // Primary
-  static const Color blushPink = Color(0xFFFFADBC);     // Secondary
-  static const Color electricSky = Color(0xFF98E4FF);   // Accent
-  static const Color pureWhite = Color(0xFFFFFFFF);     // Surface
-  static const Color midnightPlum = Color(0xFF3F2E5A);  // Deep Text
+// --- HabitTail Color Palette ---
+static const Color softIris = const Color(0xFFD0BFFF);    // Primary
+static const Color blushPink = const Color(0xFFFFADBC);   // Secondary
+static const Color electricSky = Color(0xFF98E4FF);       // Accent
+static const Color pureWhite = Color(0xFFFFFFFF);         // Surface
+static const Color midnightPlum = Color(0xFF3F2E5A);      // Deep Text
 
   @override
   Widget build(BuildContext context) {
@@ -62,27 +62,27 @@ class HabitTailApp extends StatelessWidget {
             fontSize: 32,
             fontWeight: FontWeight.bold,
             color: midnightPlum,
-          ), // H1 (Hero)
+          ), 
           headlineMedium: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w600,
             color: midnightPlum,
-          ), // H2 (Screen)
+          ), 
           bodyLarge: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
             color: midnightPlum,
-          ), // Body (Main)
+          ), 
           labelLarge: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: midnightPlum,
-          ), // Button
+          ), 
           bodySmall: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: midnightPlum,
-          ), // Caption
+          ), 
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
@@ -126,7 +126,7 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
 
-  // Temporary Placeholders until you finish the Dashboard/Task screens
+  // Reverted to your original placeholders
   final List<Widget> _pages = [
     const Center(child: Text('Home Dashboard Coming Soon')),
     const Center(child: Text('Tasks Screen')),
