@@ -145,7 +145,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) =>
             setState(() => _selectedIndex = index),
-        indicatorColor: const Color(0xFFD0BFFF).withValues(alpha: 0.3),
+        indicatorColor: const Color(0xFFD0BFFF).withOpacity(0.3),
         destinations: const [
           NavigationDestination(
               icon: Icon(Icons.home_rounded), label: 'Home'),
