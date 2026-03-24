@@ -1,17 +1,19 @@
-import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/pet_model.dart';
 import '../repositories/pet_repository.dart';
 
-class PetProvider with ChangeNotifier {
+class PetNotifier extends Notifier<List<PetModel>> {
   final PetRepository _repo = PetRepository();
-  List<PetModel> _pets = [];
 
-  List<PetModel> get pets => _pets;
+  @override
+  List<PetModel> build() => [];
 
   void startListening(String familyId) {
-    _repo.watchPets(familyId).listen((updatedPets) {
-      _pets = updatedPets;
-      notifyListeners();
+    _repo.watchPets(familyId).listen((updated) {
+      state = updated;
     });
   }
 }
+
+final petProvider =
+    NotifierProvider<PetNotifier, List<PetModel>>(() => PetNotifier());

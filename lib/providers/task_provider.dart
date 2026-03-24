@@ -1,17 +1,19 @@
-import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/task_model.dart';
 import '../repositories/task_repository.dart';
 
-class TaskProvider with ChangeNotifier {
+class TaskNotifier extends Notifier<List<TaskModel>> {
   final TaskRepository _repo = TaskRepository();
-  List<TaskModel> _tasks = [];
 
-  List<TaskModel> get tasks => _tasks;
+  @override
+  List<TaskModel> build() => [];
 
   void startListening(String familyId) {
     _repo.watchTasks(familyId).listen((updatedTasks) {
-      _tasks = updatedTasks;
-      notifyListeners();
+      state = updatedTasks;
     });
   }
 }
+
+final taskProvider =
+    NotifierProvider<TaskNotifier, List<TaskModel>>(() => TaskNotifier());

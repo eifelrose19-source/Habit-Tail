@@ -1,17 +1,19 @@
-import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/family_model.dart';
 import '../repositories/family_repository.dart';
 
-class FamilyProvider with ChangeNotifier {
+class FamilyNotifier extends Notifier<List<FamilyModel>> {
   final FamilyRepository _repo = FamilyRepository();
-  FamilyModel? _family;
 
-  FamilyModel? get family => _family;
+  @override
+  List<FamilyModel> build() => [];
 
   void startListening(String familyId) {
-    _repo.watchFamily(familyId).listen((updatedFamily) {
-      _family = updatedFamily;
-      notifyListeners();
+    _repo.watchFamily(familyId).listen((updated) {
+      state = updated;
     });
   }
 }
+
+final familyProvider =
+    NotifierProvider<FamilyNotifier, List<FamilyModel>>(() => FamilyNotifier());

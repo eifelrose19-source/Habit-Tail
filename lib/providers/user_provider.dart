@@ -1,107 +1,103 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user_model.dart';
 import '../repositories/user_repository.dart';
 
-class UserProvider with ChangeNotifier {
+class UserState {
+  final UserModel? user;
+  final bool isLoading;
+  final String? error;
+
+  const UserState({
+    this.user,
+    this.isLoading = false,
+    this.error,
+  });
+
+  bool get isParent => user?.isParent ?? false;
+  bool get isLoggedIn => user != null;
+
+  UserState copyWith({
+    UserModel? user,
+    bool? isLoading,
+    String? error,
+  }) =>
+      UserState(
+        user: user ?? this.user,
+        isLoading: isLoading ?? this.isLoading,
+        error: error,
+      );
+}
+
+class UserNotifier extends Notifier<UserState> {
   final UserRepository _repo = UserRepository();
-  
-  UserModel? _user;
-  bool _isLoading = false;
-  String? _error;
   StreamSubscription<UserModel?>? _userSubscription;
 
-  // Getters
-  UserModel? get user => _user;
-  bool get isLoading => _isLoading;
-  String? get error => _error;
-  bool get isParent => _user?.isParent ?? false;
-  bool get isLoggedIn => _user != null;
+  @override
+  UserState build() {
+    ref.onDispose(() {
+      _userSubscription?.cancel();
+    });
+    return const UserState();
+  }
 
-  /// Start listening to user changes in real-time
   void startListening(String userId) {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    // Cancel existing subscription if any
+    state = state.copyWith(isLoading: true, error: null);
     _userSubscription?.cancel();
-
     _userSubscription = _repo.watchUser(userId).listen(
       (updatedUser) {
-        _user = updatedUser;
-        _isLoading = false;
-        _error = null;
-        notifyListeners();
+        state = state.copyWith(
+          user: updatedUser,
+          isLoading: false,
+          error: null,
+        );
       },
       onError: (error) {
-        _error = error.toString();
-        _isLoading = false;
-        notifyListeners();
+        state = state.copyWith(
+          isLoading: false,
+          error: error.toString(),
+        );
       },
     );
   }
 
-  /// Stop listening to user changes (call when user logs out)
   void stopListening() {
     _userSubscription?.cancel();
     _userSubscription = null;
-    _user = null;
-    _error = null;
-    _isLoading = false;
-    notifyListeners();
+    state = const UserState();
   }
 
-  /// Fetch user once (no real-time updates)
   Future<void> fetchUser(String userId) async {
     try {
-      _isLoading = true;
-      _error = null;
-      notifyListeners();
-
-      _user = await _repo.getUser(userId);
-      _isLoading = false;
-      notifyListeners();
+      state = state.copyWith(isLoading: true, error: null);
+      final fetched = await _repo.getUser(userId);
+      state = state.copyWith(user: fetched, isLoading: false);
     } catch (e) {
-      _error = e.toString();
-      _isLoading = false;
-      notifyListeners();
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
-  /// Update user data
   Future<void> updateUser(String userId, Map<String, dynamic> data) async {
     try {
       await _repo.updateUser(userId, data);
-      // The real-time listener will automatically update _user
     } catch (e) {
-      _error = e.toString();
-      notifyListeners();
+      state = state.copyWith(error: e.toString());
       rethrow;
     }
   }
 
-  /// Add points to user
   Future<void> addPoints(String userId, int points) async {
     try {
       await _repo.addPoints(userId, points);
-      // The real-time listener will automatically update _user
     } catch (e) {
-      _error = e.toString();
-      notifyListeners();
+      state = state.copyWith(error: e.toString());
       rethrow;
     }
   }
 
-  /// Clear error message
   void clearError() {
-    _error = null;
-    notifyListeners();
-  }
-
-  @override
-  void dispose() {
-    _userSubscription?.cancel();
-    super.dispose();
+    state = state.copyWith(error: null);
   }
 }
+
+final userProvider = NotifierProvider<UserNotifier, UserState>(() => UserNotifier());
