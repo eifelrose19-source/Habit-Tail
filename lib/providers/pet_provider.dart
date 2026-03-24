@@ -1,16 +1,32 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/pet_model.dart';
-import '../repositories/pet_repository.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PetNotifier extends Notifier<List<PetModel>> {
-  final PetRepository _repo = PetRepository();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  StreamSubscription<QuerySnapshot>? _subscription;
 
   @override
-  List<PetModel> build() => [];
+  List<PetModel> build() {
+    // Clean up when the provider is destroyed
+    ref.onDispose(() => _subscription?.cancel());
+    return [];
+  }
 
-  void startListening(String familyId) {
-    _repo.watchPets(familyId).listen((updated) {
-      state = updated;
+  /// Listens to all pets belonging to a specific family
+  void watchFamilyPets(String familyId) {
+    // Cancel any existing subscription before starting a new one
+    _subscription?.cancel();
+
+    _subscription = _firestore
+        .collection('pets')
+        .where('family_id', isEqualTo: familyId) 
+        .snapshots()
+        .listen((snapshot) {
+      state = snapshot.docs
+          .map((doc) => PetModel.fromFirestore(doc))
+          .toList();
     });
   }
 }
