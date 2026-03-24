@@ -1,7 +1,7 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user_model.dart';
-import '../repositories/user_repository.dart';
 
 class UserState {
   final UserModel? user;
@@ -30,35 +30,63 @@ class UserState {
 }
 
 class UserNotifier extends Notifier<UserState> {
-  final UserRepository _repo = UserRepository();
-  StreamSubscription<UserModel?>? _userSubscription;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _userSubscription;
 
   @override
   UserState build() {
-    ref.onDispose(() {
-      _userSubscription?.cancel();
-    });
+    ref.onDispose(() => _userSubscription?.cancel());
     return const UserState();
   }
 
+  /// Listens to the specific user document in the 'users' collection
   void startListening(String userId) {
     state = state.copyWith(isLoading: true, error: null);
     _userSubscription?.cancel();
-    _userSubscription = _repo.watchUser(userId).listen(
-      (updatedUser) {
-        state = state.copyWith(
-          user: updatedUser,
-          isLoading: false,
-          error: null,
-        );
+
+    _userSubscription = _firestore
+        .collection('users')
+        .doc(userId)
+        .snapshots()
+        .listen(
+      (doc) {
+        if (doc.exists) {
+          state = state.copyWith(
+            user: UserModel.fromFirestore(doc),
+            isLoading: false,
+          );
+        } else {
+          state = state.copyWith(isLoading: false, error: "User not found");
+        }
       },
       onError: (error) {
-        state = state.copyWith(
-          isLoading: false,
-          error: error.toString(),
-        );
+        state = state.copyWith(isLoading: false, error: error.toString());
       },
     );
+  }
+
+  /// Updates user points (e.g., when a task is approved)
+  Future<void> addPoints(String userId, int points) async {
+    try {
+      await _firestore.collection('users').doc(userId).update({
+        'total_points': FieldValue.increment(points),
+      });
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+      rethrow;
+    }
+  }
+
+  /// Deducts user points (e.g., when a reward is claimed)
+  Future<void> subtractPoints(String userId, int points) async {
+    try {
+      await _firestore.collection('users').doc(userId).update({
+        'total_points': FieldValue.increment(-points),
+      });
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+      rethrow;
+    }
   }
 
   void stopListening() {
@@ -66,38 +94,7 @@ class UserNotifier extends Notifier<UserState> {
     _userSubscription = null;
     state = const UserState();
   }
-
-  Future<void> fetchUser(String userId) async {
-    try {
-      state = state.copyWith(isLoading: true, error: null);
-      final fetched = await _repo.getUser(userId);
-      state = state.copyWith(user: fetched, isLoading: false);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
-    }
-  }
-
-  Future<void> updateUser(String userId, Map<String, dynamic> data) async {
-    try {
-      await _repo.updateUser(userId, data);
-    } catch (e) {
-      state = state.copyWith(error: e.toString());
-      rethrow;
-    }
-  }
-
-  Future<void> addPoints(String userId, int points) async {
-    try {
-      await _repo.addPoints(userId, points);
-    } catch (e) {
-      state = state.copyWith(error: e.toString());
-      rethrow;
-    }
-  }
-
-  void clearError() {
-    state = state.copyWith(error: null);
-  }
 }
 
-final userProvider = NotifierProvider<UserNotifier, UserState>(() => UserNotifier());
+final userProvider =
+    NotifierProvider<UserNotifier, UserState>(() => UserNotifier());
