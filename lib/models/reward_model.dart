@@ -4,21 +4,23 @@ class RewardModel {
   final String rewardId;
   final String createdBy;
   final String familyId;
+  final String description; 
   final bool isActive;
   final bool isAvailable;
-  final String rewardPrice; // or int if it's a number
-  final String rewardTitle;
-  final DateTime timestampCreated;
+  final int cost; 
+  final String title;
+  final DateTime timestamp;
 
   RewardModel({
     required this.rewardId,
     required this.createdBy,
     required this.familyId,
+    required this.description,
     required this.isActive,
     required this.isAvailable,
-    required this.rewardPrice,
-    required this.rewardTitle,
-    required this.timestampCreated,
+    required this.cost,
+    required this.title,
+    required this.timestamp,
   });
 
   factory RewardModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -26,25 +28,27 @@ class RewardModel {
     
     return RewardModel(
       rewardId: doc.id,
-      createdBy: data['Created_by'] ?? "",
-      familyId: data['Family_id'] ?? "",
-      isActive: data['Is_active'] ?? false,
-      isAvailable: data['Is_available'] ?? false,
-      rewardPrice: data['Reward_price'] ?? "",
-      rewardTitle: data['Reward_title'] ?? "",
-      timestampCreated: (data['Timestamp_created'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdBy: data['created_by'] ?? "",
+      family_id: data['family_id'] ?? "",
+      description: data['description'] ?? "",
+      isActive: data['is_active'] ?? false,
+      isAvailable: data['is_available'] ?? false,
+      cost: (data['cost'] as num?)?.toInt() ?? 0,
+      title: data['title'] ?? "",
+      timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
   Map<String, dynamic> toFirestore() {
     return {
-      'Created_by': createdBy,
-      'Family_id': familyId,
-      'Is_active': isActive,
-      'Is_available': isAvailable,
-      'Reward_price': rewardPrice,
-      'Reward_title': rewardTitle,
-      'Timestamp_created': Timestamp.fromDate(timestampCreated),
+      'created_by': createdBy,
+      'family_id': familyId,
+      'description': description,
+      'is_active': isActive,
+      'is_available': isAvailable,
+      'cost': cost,
+      'title': title,
+      'timestamp': Timestamp.fromDate(timestamp),
     };
   }
 
@@ -52,55 +56,36 @@ class RewardModel {
     String? rewardId,
     String? createdBy,
     String? familyId,
+    String? description,
     bool? isActive,
     bool? isAvailable,
-    String? rewardPrice,
-    String? rewardTitle,
-    DateTime? timestampCreated,
+    int? cost,
+    String? title,
+    DateTime? timestamp,
   }) {
     return RewardModel(
       rewardId: rewardId ?? this.rewardId,
       createdBy: createdBy ?? this.createdBy,
       familyId: familyId ?? this.familyId,
+      description: description ?? this.description,
       isActive: isActive ?? this.isActive,
       isAvailable: isAvailable ?? this.isAvailable,
-      rewardPrice: rewardPrice ?? this.rewardPrice,
-      rewardTitle: rewardTitle ?? this.rewardTitle,
-      timestampCreated: timestampCreated ?? this.timestampCreated,
+      cost: cost ?? this.cost,
+      title: title ?? this.title,
+      timestamp: timestamp ?? this.timestamp,
     );
   }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    
-    return other is RewardModel &&
-        other.rewardId == rewardId &&
-        other.createdBy == createdBy &&
-        other.familyId == familyId &&
-        other.isActive == isActive &&
-        other.isAvailable == isAvailable &&
-        other.rewardPrice == rewardPrice &&
-        other.rewardTitle == rewardTitle &&
-        other.timestampCreated == timestampCreated;
+    return other is RewardModel && other.rewardId == rewardId;
   }
 
   @override
-  int get hashCode {
-    return Object.hash(
-      rewardId,
-      createdBy,
-      familyId,
-      isActive,
-      isAvailable,
-      rewardPrice,
-      rewardTitle,
-      timestampCreated,
-    );
-  }
+  int get hashCode => rewardId.hashCode;
 
   @override
-  String toString() {
-    return 'RewardModel(rewardId: $rewardId, createdBy: $createdBy, familyId: $familyId, isActive: $isActive, isAvailable: $isAvailable, rewardPrice: $rewardPrice, rewardTitle: $rewardTitle, timestampCreated: $timestampCreated)';
-  }
+  String toString() => 'Reward(title: $title, cost: $cost)';
 }
+
