@@ -3,13 +3,13 @@ import '../models/user_model.dart';
 import '../models/pet_model.dart';
 import '../models/task_model.dart';
 import '../models/reward_model.dart';
-import '../models/vetinfo_model.dart';
 import '../models/redemption_log_model.dart';
 
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // Reference for the Users collection
+  // --- Collection References with Converters ---
+
   CollectionReference<UserModel> get users => _db
       .collection('users')
       .withConverter<UserModel>(
@@ -17,7 +17,6 @@ class DatabaseService {
         toFirestore: (model, _) => model.toFirestore(),
       );
 
-  // Reference for the Pets collection
   CollectionReference<PetModel> get pets => _db
       .collection('pets')
       .withConverter<PetModel>(
@@ -25,15 +24,14 @@ class DatabaseService {
         toFirestore: (model, _) => model.toFirestore(),
       );
 
-  // Reference for the Tasks collection
   CollectionReference<TaskModel> get tasks => _db
       .collection('tasks')
       .withConverter<TaskModel>(
         fromFirestore: (snapshot, _) => TaskModel.fromFirestore(snapshot),
+      // Ensure your TaskModel has this method or rename it to toMap() if needed
         toFirestore: (model, _) => model.toFirestore(),
       );
 
-  // Reference for the Rewards collection
   CollectionReference<RewardModel> get rewards => _db
       .collection('rewards')
       .withConverter<RewardModel>(
@@ -41,7 +39,6 @@ class DatabaseService {
         toFirestore: (model, _) => model.toFirestore(),
       );
 
-  // Reference for Redemption Logs
   CollectionReference<RedemptionLogModel> get redemptionLogs => _db
       .collection('redemption_log')
       .withConverter<RedemptionLogModel>(
@@ -49,7 +46,7 @@ class DatabaseService {
         toFirestore: (model, _) => model.toFirestore(),
       );
 
-  /// --- STREAM METHODS ---
+  // --- STREAM METHODS ---
 
   // Stream a single User
   Stream<UserModel?> streamUser(String userId) {
@@ -80,4 +77,3 @@ class DatabaseService {
         .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
   }
 }
-
