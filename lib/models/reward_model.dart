@@ -29,7 +29,8 @@ class RewardModel {
     return RewardModel(
       rewardId: doc.id,
       createdBy: data['created_by'] ?? "",
-      family_id: data['family_id'] ?? "",
+      // FIX: Changed 'family_id:' to 'familyId:' to match your constructor
+      familyId: data['family_id'] ?? "",
       description: data['description'] ?? "",
       isActive: data['is_active'] ?? false,
       isAvailable: data['is_available'] ?? false,
@@ -88,4 +89,3 @@ class RewardModel {
   @override
   String toString() => 'Reward(title: $title, cost: $cost)';
 }
-
