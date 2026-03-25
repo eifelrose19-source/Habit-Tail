@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:pinput/pinput.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../parent_ui/parent_dashboard_screen.dart';
 
 class PartnerPinScreen extends StatefulWidget {
   const PartnerPinScreen({super.key});
@@ -10,158 +13,100 @@ class PartnerPinScreen extends StatefulWidget {
 }
 
 class _PartnerPinScreenState extends State<PartnerPinScreen> {
-  // Controllers for each PIN digit
-  final List<TextEditingController> _pinControllers = List.generate(
-    4,
-    (index) => TextEditingController(),
-  );
+  final TextEditingController _pinController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
+  bool _isLoading = false;
 
-  // Focus nodes for each PIN field
-  final List<FocusNode> _focusNodes = List.generate(
-    4,
-    (index) => FocusNode(),
-  );
-
-  // --- Color Palette for HabitTail ---
+  // --- HabitTail Color Palette ---
   static const Color softIris = Color(0xFFD0BFFF);
   static const Color electricSky = Color(0xFF98E4FF);
   static const Color midnightPlum = Color(0xFF3F2E5A);
+  static const Color errorRed = Color(0xFFE57373);
 
   @override
   void dispose() {
-    for (var controller in _pinControllers) {
-      controller.dispose();
-    }
-    for (var node in _focusNodes) {
-      node.dispose();
-    }
+    _pinController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
-  void _verifyPin() {
-    String enteredPin = _pinControllers.map((c) => c.text).join();
-    
-    //TODO: Replace with actual PIN verification logic
-    const String correctPin = "1234"; // This should come from your saved PIN
-    
-    if (enteredPin == correctPin) {
-      // Navigate to parent dashboard
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("PIN verified successfully!"),
-          backgroundColor: Colors.green,
+  void _showSnackbar(String message, Color bgColor) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: GoogleFonts.quicksand(fontWeight: FontWeight.w500),
         ),
-      );
-      // Navigator.push(context, MaterialPageRoute(builder: (context) => ParentDashboardScreen()));
-    } else {
-      // Show error
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Incorrect PIN. Please try again."),
-          backgroundColor: Colors.red,
-        ),
-      );
-      // Clear all fields
-      for (var controller in _pinControllers) {
-        controller.clear();
+        backgroundColor: bgColor,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Future<void> _verifyPin(String enteredPin) async {
+    setState(() => _isLoading = true);
+
+    try {
+      final User? user = FirebaseAuth.instance.currentUser;
+      
+      if (user == null) {
+        _showSnackbar("User session not found. Please log in again.", Colors.orange);
+        return;
       }
-      _focusNodes[0].requestFocus();
+
+      // Fetch the document matching your Firestore screenshot
+      final DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (!userDoc.exists) {
+        _showSnackbar("User profile not found in database.", errorRed);
+        return;
+      }
+
+      final data = userDoc.data() as Map<String, dynamic>;
+      final String? storedPin = data['parentalPin'];
+
+      if (storedPin == null) {
+        _showSnackbar("No Parental PIN has been set yet.", Colors.orange);
+      } else if (enteredPin == storedPin) {
+        _showSnackbar("Access Granted", Colors.green);
+        if (enteredPin == storedPin) {
+          //Navigate to Parent Dashboard
+          if (!mounted) return;
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ParentDashboardScreen(),
+            ),
+          );
+        }
+      } else {
+        _showSnackbar("Incorrect PIN. Please try again.", errorRed);
+        _pinController.clear();
+        _focusNode.requestFocus();
+      }
+    } catch (e) {
+      _showSnackbar("Connection Error: ${e.toString()}", errorRed);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              softIris,
-              Color(0xFFE0D4FC),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Spacer(flex: 2),
-
-                // Title Text
-                Text(
-                  'Partner Pin',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.quicksand(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: midnightPlum,
-                  ),
-                ),
-
-                const SizedBox(height: 32),
-
-                // --- LOGO ---
-                Image.asset(
-                  'assets/images/icons/hbtletters.png',
-                  width: 250,
-                  fit: BoxFit.contain,
-                ),
-
-                const SizedBox(height: 32),
-
-                // Instructions Text
-                Text(
-                  'Enter 4 digit Parental\nPIN to Proceed',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.quicksand(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: midnightPlum,
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // --- PIN INPUT BOXES ---
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(4, (index) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: _buildPinBox(index),
-                    );
-                  }),
-                ),
-
-                const Spacer(flex: 2),
-
-                // --- VERIFY BUTTON ---
-                _buildButton(
-                  context: context,
-                  label: "VERIFY",
-                  onTap: _verifyPin,
-                ),
-
-                const SizedBox(height: 40),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Helper widget to build PIN input box
-  Widget _buildPinBox(int index) {
-    return Container(
+    // Pinput Theme Setup
+    final defaultPinTheme = PinTheme(
       width: 60,
       height: 60,
+      textStyle: GoogleFonts.quicksand(
+        fontSize: 24,
+        fontWeight: FontWeight.bold,
+        color: midnightPlum,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -173,62 +118,115 @@ class _PartnerPinScreenState extends State<PartnerPinScreen> {
           ),
         ],
       ),
-      child: TextField(
-        controller: _pinControllers[index],
-        focusNode: _focusNodes[index],
-        textAlign: TextAlign.center,
-        keyboardType: TextInputType.number,
-        maxLength: 1,
-        obscureText: true,
-        style: GoogleFonts.quicksand(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-          color: midnightPlum,
-        ),
-        decoration: const InputDecoration(
-          counterText: '',
-          border: InputBorder.none,
-        ),
-        inputFormatters: [
-          FilteringTextInputFormatter.digitsOnly,
-        ],
-        onChanged: (value) {
-          if (value.length == 1 && index < 3) {
-            // Move to next field
-            _focusNodes[index + 1].requestFocus();
-          } else if (value.isEmpty && index > 0) {
-            // Move to previous field on backspace
-            _focusNodes[index - 1].requestFocus();
-          }
-        },
+    );
+
+    final focusedPinTheme = defaultPinTheme.copyWith(
+      decoration: defaultPinTheme.decoration!.copyWith(
+        border: Border.all(color: electricSky, width: 2),
       ),
     );
-  }
 
-  // Helper widget to build the button
-  Widget _buildButton({
-    required BuildContext context,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: ElevatedButton(
-        onPressed: onTap,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: electricSky,
-          foregroundColor: midnightPlum,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+    return Scaffold(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [softIris, Color(0xFFE0D4FC)],
           ),
         ),
-        child: Text(
-          label,
-          style: GoogleFonts.quicksand(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                children: [
+                  const SizedBox(height: 60),
+                  
+                  Text(
+                    'Partner Pin',
+                    style: GoogleFonts.quicksand(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: midnightPlum,
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  Image.asset(
+                    'assets/images/icons/hbtletters.png',
+                    width: 220,
+                    fit: BoxFit.contain,
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  Text(
+                    'Enter 4 digit Parental\nPIN to Proceed',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.quicksand(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: midnightPlum,
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Pinput Widget
+                  Pinput(
+                    length: 4,
+                    controller: _pinController,
+                    focusNode: _focusNode,
+                    obscureText: true,
+                    obscuringCharacter: '●',
+                    defaultPinTheme: defaultPinTheme,
+                    focusedPinTheme: focusedPinTheme,
+                    hapticFeedbackType: HapticFeedbackType.lightImpact,
+                    onCompleted: _verifyPin,
+                    cursor: Container(
+                      width: 2,
+                      height: 20,
+                      color: electricSky,
+                    ),
+                  ),
+
+                  const SizedBox(height: 60),
+
+                  // Verify Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 55,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : () => _verifyPin(_pinController.text),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: electricSky,
+                        foregroundColor: midnightPlum,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                      ),
+                      child: _isLoading
+                          ? const CircularProgressIndicator(color: midnightPlum)
+                          : Text(
+                              'VERIFY',
+                              style: GoogleFonts.quicksand(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
           ),
         ),
       ),
