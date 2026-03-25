@@ -119,7 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           onTap: () async {
                             setState(() => _isLoading = true);
                             try {
-                              await _authService.signIn(
+                              await _authService.signUp(
                                 _emailController.text.trim(),
                                 _passwordController.text.trim(),
                               );

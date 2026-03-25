@@ -29,23 +29,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   Future<void> _handleSignUp() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
-
     try {
       // Logic: Call your AuthService to create the user
       await _authService.signUp(
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
-      
-      // FIX: Check context.mounted after async gap to resolve linter error
-      if (!context.mounted) return;
+      if (!mounted) return;
       
       Navigator.pushReplacementNamed(context, '/create-or-join-family');
     } catch (e) {
-      // FIX: Check context.mounted before showing SnackBar
-      if (!context.mounted) return;
+      if (!mounted) return;
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
