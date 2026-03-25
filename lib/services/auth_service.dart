@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
 import '../services/user_service.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final UserService _userService = UserService();
@@ -41,6 +42,31 @@ class AuthService {
       throw _handleAuthException(e);
     }
   }
+  /// Sign in with Google
+  Future<UserCredential> signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) throw Exception('Google sign in cancelled');
+
+      final GoogleSignInAuthentication googleAuth =
+        await googleUser.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      final userCredential =
+        await _auth.signInWithCredential(credential);
+
+      await refreshFamilyToken();
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      throw Exception('Google sign in failed: $e');
+    }
+  }
+  
 
   /// Sign up and create user document in Firestore.
   Future<UserModel> signUpAndCreateUser({

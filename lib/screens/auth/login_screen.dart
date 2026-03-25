@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,6 +12,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _authService = AuthService();
+  bool _isLoading = false;
   bool _obscurePassword = true;
 
   @override
@@ -19,7 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
     _passwordController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,16 +48,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   const SizedBox(height: 40),
 
-                  //Logo
+                  // Logo
                   Image.asset(
                     'assets/images/icons/hbtletters.png',
                     width: 200,
                     fit: BoxFit.contain,
                   ),
-                  
+
                   const SizedBox(height: 60),
 
-                  //Email input
+                  // Email input
                   Text(
                     'Email:',
                     style: GoogleFonts.quicksand(
@@ -72,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 24),
 
-                  //Password Input
+                  // Password input
                   Text(
                     'Password:',
                     style: GoogleFonts.quicksand(
@@ -89,12 +92,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 8),
 
-                  //Forgot Password
+                  // Forgot Password
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
                       onPressed: () {
-                        //ToDo: Navigate to forgot password screen
+                        // TODO: Navigate to forgot password screen
                       },
                       child: Text(
                         'Forgot Password?',
@@ -108,17 +111,38 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  //Log In Button
-                  _buildPrimaryButton(
-                    label: 'Log In',
-                    onTap: () {
-                      //ToDo: Add authentication logic here
-                      Navigator.pushNamed(context, '/create-or-join-family');
-                    },
-                  ),
+                  // Log In Button
+                  _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _buildPrimaryButton(
+                          label: 'Log In',
+                          onTap: () async {
+                            setState(() => _isLoading = true);
+                            try {
+                              await _authService.signIn(
+                                _emailController.text.trim(),
+                                _passwordController.text.trim(),
+                              );
+                              
+                              // Check context specifically to clear the linter error
+                              if (!context.mounted) return;
+                              
+                              Navigator.pushNamed(context, '/create-or-join-family');
+                            } catch (e) {
+                              if (!context.mounted) return;
+                              
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(e.toString())),
+                              );
+                            } finally {
+                              if (mounted) setState(() => _isLoading = false);
+                            }
+                          },
+                        ),
+
                   const SizedBox(height: 32),
 
-                  // --- OR DIVIDER ---
+                  // OR Divider
                   Row(
                     children: [
                       const Expanded(child: Divider(color: Color(0xFF3F2E5A))),
@@ -139,29 +163,44 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 24),
 
-                  // --- GOOGLE SIGN IN ---
+                  // Google Sign In
                   _buildSocialButton(
                     label: 'Log in with Google',
                     icon: Icons.g_mobiledata,
-                    onTap: () {
-                      // TODO: Implement Google Sign In
+                    onTap: () async {
+                      setState(() => _isLoading = true);
+                      try {
+                        await _authService.signInWithGoogle();
+                        
+                        if (!context.mounted) return; // Fix applied here
+                        
+                        Navigator.pushNamed(context, '/create-or-join-family');
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(e.toString())),
+                        );
+                      } finally {
+                        if (mounted) setState(() => _isLoading = false);
+                      }
                     },
                   ),
 
                   const SizedBox(height: 16),
 
-                  // --- APPLE SIGN IN ---
+                  // Apple Sign In
                   _buildSocialButton(
                     label: 'Log in with Apple',
                     icon: Icons.apple,
-                    onTap: () {
+                    onTap: () async {
                       // TODO: Implement Apple Sign In
                     },
                   ),
 
                   const SizedBox(height: 32),
 
-                  // --- SIGN UP LINK ---
+                  // Sign Up Link
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -223,7 +262,7 @@ class _LoginScreenState extends State<LoginScreen> {
           hintStyle: GoogleFonts.quicksand(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: const Color(0xFF3F2E5A).withValues(alpha: 0.5), // FIXED
+            color: const Color(0xFF3F2E5A).withValues(alpha: 0.5),
           ),
           filled: true,
           fillColor: const Color(0xFFFFFFFF),
@@ -231,12 +270,13 @@ class _LoginScreenState extends State<LoginScreen> {
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(
                     _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                    color: const Color(0xFF3F2E5A).withValues(alpha: 0.5), // FIXED
+                    color: const Color(0xFF3F2E5A).withValues(alpha: 0.5),
                   ),
                   onPressed: () {
                     setState(() {
@@ -253,7 +293,7 @@ class _LoginScreenState extends State<LoginScreen> {
   // --- PRIMARY BUTTON WIDGET ---
   Widget _buildPrimaryButton({
     required String label,
-    required VoidCallback onTap,
+    required Future<void> Function() onTap,
   }) {
     return SizedBox(
       height: 52,
@@ -283,7 +323,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildSocialButton({
     required String label,
     required IconData icon,
-    required VoidCallback onTap,
+    required Future<void> Function() onTap,
   }) {
     return SizedBox(
       height: 52,
