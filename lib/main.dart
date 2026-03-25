@@ -1,9 +1,11 @@
-
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'firebase_options.dart';
+
+// --- Color Palette ---
+import 'colors.dart';
 
 // --- Screen Imports ---
 import 'screens/auth/splash_screen.dart';
@@ -11,16 +13,9 @@ import 'screens/auth/login_screen.dart';
 import 'screens/auth/signup_screen.dart';
 import 'screens/auth/create_or_join_family_screen.dart';
 
-// --- 1. HabitTail Color Palette (Top-level constants) ---
-const Color softIris      = Color(0xFFD0BFFF);  // Primary
-const Color blushPink     = Color(0xFFFFADBC);  // Secondary
-const Color electricSky   = Color(0xFF98E4FF);  // Accent
-const Color pureWhite     = Color(0xFFFFFFFF);  // Surface
-const Color midnightPlum  = Color(0xFF3F2E5A);  // Deep Text
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -148,7 +143,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) =>
             setState(() => _selectedIndex = index),
-        indicatorColor: softIris.withOpacity(0.3), 
+        indicatorColor: softIris.withOpacity(0.3),
         destinations: const [
           NavigationDestination(
               icon: Icon(Icons.home_rounded), label: 'Home'),
