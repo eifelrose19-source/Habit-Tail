@@ -28,15 +28,15 @@ void main() async {
   );
 }
 
+// --- HabitTail Color Palette ---
+const Color softIris     = Color(0xFFD0BFFF);  // Primary
+const Color blushPink    = Color(0xFFFFADBC);  // Secondary
+const Color electricSky  = Color(0xFF98E4FF);  // Accent
+const Color pureWhite    = Color(0xFFFFFFFF);  // Surface
+const Color midnightPlum = Color(0xFF3F2E5A);  // Deep Text
+
 class HabitTailApp extends StatelessWidget {
   const HabitTailApp({super.key});
-
-// --- HabitTail Color Palette ---
-static const Color softIris    = Color(0xFFD0BFFF);   // Primary
-static const Color blushPink   = Color(0xFFFFADBC);   // Secondary
-static const Color electricSky = Color(0xFF98E4FF);   // Accent
-static const Color pureWhite   = Color(0xFFFFFFFF);   // Surface
-static const Color midnightPlum = Color(0xFF3F2E5A);  // Deep Text
 
   @override
   Widget build(BuildContext context) {
@@ -61,27 +61,27 @@ static const Color midnightPlum = Color(0xFF3F2E5A);  // Deep Text
             fontSize: 32,
             fontWeight: FontWeight.bold,
             color: midnightPlum,
-          ), 
+          ),
           headlineMedium: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w600,
             color: midnightPlum,
-          ), 
+          ),
           bodyLarge: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
             color: midnightPlum,
-          ), 
+          ),
           labelLarge: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: midnightPlum,
-          ), 
+          ),
           bodySmall: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: midnightPlum,
-          ), 
+          ),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
@@ -125,7 +125,6 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
 
-  // Reverted to your original placeholders
   final List<Widget> _pages = [
     const Center(child: Text('Home Dashboard Coming Soon')),
     const Center(child: Text('Tasks Screen')),
@@ -144,7 +143,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) =>
             setState(() => _selectedIndex = index),
-        indicatorColor: const Color(0xFFD0BFFF).withOpacity(0.3),
+        indicatorColor: Color(0xFFD0BFFF).withOpacity(0.3), // removed const
         destinations: const [
           NavigationDestination(
               icon: Icon(Icons.home_rounded), label: 'Home'),
