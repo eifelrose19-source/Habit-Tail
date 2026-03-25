@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../services/auth_service.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -13,6 +14,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _authService = AuthService();
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -31,24 +33,29 @@ class _SignUpScreenState extends State<SignUpScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Add your authentication logic here
-      // await authProvider.signUp(_emailController.text.trim(), _passwordController.text);
+      // Logic: Call your AuthService to create the user
+      await _authService.signUp(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
       
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/create-or-join-family');
-      }
+      // FIX: Check context.mounted after async gap to resolve linter error
+      if (!context.mounted) return;
+      
+      Navigator.pushReplacementNamed(context, '/create-or-join-family');
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Sign up failed: ${e.toString()}',
-              style: GoogleFonts.quicksand(),
-            ),
-            backgroundColor: Colors.red,
+      // FIX: Check context.mounted before showing SnackBar
+      if (!context.mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Sign up failed: ${e.toString()}',
+            style: GoogleFonts.quicksand(),
           ),
-        );
-      }
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -67,8 +74,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFFD0BFFF), // Soft Iris
-              Color(0xFFFFADBC), // Blush Pink
+              Color(0xFFD0BFFF),
+              Color(0xFFFFADBC),
             ],
           ),
         ),
@@ -82,17 +89,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 40),
-
-                    // Logo
                     Image.asset(
                       'assets/images/icons/hbtletters.png',
                       width: 200,
                       fit: BoxFit.contain,
                     ),
-
                     const SizedBox(height: 40),
-
-                    // Title
                     Text(
                       'Create your account',
                       textAlign: TextAlign.center,
@@ -102,10 +104,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         color: const Color(0xFF3F2E5A),
                       ),
                     ),
-
                     const SizedBox(height: 40),
-
-                    // Email Input
                     Text(
                       'Email:',
                       style: GoogleFonts.quicksand(
@@ -124,10 +123,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               ? 'Enter a valid email'
                               : null,
                     ),
-
                     const SizedBox(height: 24),
-
-                    // Password Input
                     Text(
                       'Password:',
                       style: GoogleFonts.quicksand(
@@ -149,10 +145,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ? 'Must be 6+ characters'
                           : null,
                     ),
-
                     const SizedBox(height: 24),
-
-                    // Confirm Password Input
                     Text(
                       'Confirm Password:',
                       style: GoogleFonts.quicksand(
@@ -176,19 +169,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               ? 'Passwords do not match'
                               : null,
                     ),
-
                     const SizedBox(height: 40),
-
-                    // Sign Up Button
                     _buildPrimaryButton(
                       label: 'Sign Up',
                       onTap: _isLoading ? null : _handleSignUp,
                       isLoading: _isLoading,
                     ),
-
                     const SizedBox(height: 24),
-
-                    // Login Link
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -216,7 +203,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 20),
                   ],
                 ),
@@ -228,7 +214,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  // Input Field Widget
   Widget _buildInputField({
     required TextEditingController controller,
     required String hint,
@@ -255,7 +240,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           hintStyle: GoogleFonts.quicksand(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: const Color(0xFF3F2E5A).withValues(alpha: 0.5), // FIXED
+            color: const Color(0xFF3F2E5A).withValues(alpha: 0.5),
           ),
           filled: true,
           fillColor: const Color(0xFFFFFFFF),
@@ -281,7 +266,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ? IconButton(
                   icon: Icon(
                     obscureText ? Icons.visibility_off : Icons.visibility,
-                    color: const Color(0xFF3F2E5A).withValues(alpha: 0.5), // FIXED
+                    color: const Color(0xFF3F2E5A).withValues(alpha: 0.5),
                   ),
                   onPressed: onToggleVisibility,
                 )
@@ -291,7 +276,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  // Primary Button Widget
   Widget _buildPrimaryButton({
     required String label,
     required VoidCallback? onTap,
@@ -302,7 +286,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       child: ElevatedButton(
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF98E4FF), // Electric Sky
+          backgroundColor: const Color(0xFF98E4FF),
           foregroundColor: const Color(0xFF3F2E5A),
           elevation: 0,
           shape: RoundedRectangleBorder(
