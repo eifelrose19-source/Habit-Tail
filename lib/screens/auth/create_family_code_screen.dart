@@ -3,9 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:habit_tail/screens/auth/manage_family_screen.dart'; 
 
-class CreateFamilyCode extends StatelessWidget {
+class CreateFamilyCode extends StatefulWidget {
   const CreateFamilyCode({super.key}); 
-
+  @override
+  State<CreateFamilyCode> createState() => _CreateFamilyCodeState();
+}
+class _CreateFamilyCodeState extends State<CreateFamilyCode> {
   // --- Color Palette for HabitTail ---
   static const Color softIris = Color(0xFFD0BFFF);      // Primary Background
   static const Color electricSky = Color(0xFF98E4FF);   // Button Background
@@ -92,8 +95,9 @@ class CreateFamilyCode extends StatelessWidget {
                   context: context,
                   label: "Copy Code",
                   onTap: () {
+                    final messenger = ScaffoldMessenger.of(context);
                     Clipboard.setData(const ClipboardData(text: familyCode)).then((_) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         const SnackBar(
                           content: Text("Family code copied to clipboard!"),
                           backgroundColor: midnightPlum,

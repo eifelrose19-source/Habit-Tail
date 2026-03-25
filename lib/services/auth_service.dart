@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
 import '../services/user_service.dart';
-
+import 'package:flutter/foundation.dart';
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final UserService _userService = UserService();
@@ -21,9 +21,9 @@ class AuthService {
       final claims = tokenResult.claims;
 
       if (claims != null && claims.containsKey('family_id')) {
-        print("Success: family_id found in token: ${claims['family_id']}");
+        debugPrint("Success: family_id found in token: ${claims['family_id']}");
       } else {
-        print("Debug: family_id is currently missing from token.");
+        debugPrint("Debug: family_id is currently missing from token.");
       }
     }
   }
