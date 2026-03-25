@@ -1,16 +1,26 @@
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'firebase_options.dart';
-// Authenticated Screen Imports
+
+// --- Screen Imports ---
 import 'screens/auth/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/signup_screen.dart';
 import 'screens/auth/create_or_join_family_screen.dart';
 
+// --- 1. HabitTail Color Palette (Top-level constants) ---
+const Color softIris      = Color(0xFFD0BFFF);  // Primary
+const Color blushPink     = Color(0xFFFFADBC);  // Secondary
+const Color electricSky   = Color(0xFF98E4FF);  // Accent
+const Color pureWhite     = Color(0xFFFFFFFF);  // Surface
+const Color midnightPlum  = Color(0xFF3F2E5A);  // Deep Text
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -27,13 +37,6 @@ void main() async {
     ),
   );
 }
-
-// --- HabitTail Color Palette ---
-const Color softIris     = Color(0xFFD0BFFF);  // Primary
-const Color blushPink    = Color(0xFFFFADBC);  // Secondary
-const Color electricSky  = Color(0xFF98E4FF);  // Accent
-const Color pureWhite    = Color(0xFFFFFFFF);  // Surface
-const Color midnightPlum = Color(0xFF3F2E5A);  // Deep Text
 
 class HabitTailApp extends StatelessWidget {
   const HabitTailApp({super.key});
@@ -86,6 +89,8 @@ class HabitTailApp extends StatelessWidget {
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             elevation: 0,
+            backgroundColor: softIris,
+            foregroundColor: midnightPlum,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -143,7 +148,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) =>
             setState(() => _selectedIndex = index),
-        indicatorColor: Color(0xFFD0BFFF).withOpacity(0.3), // removed const
+        indicatorColor: softIris.withOpacity(0.3), 
         destinations: const [
           NavigationDestination(
               icon: Icon(Icons.home_rounded), label: 'Home'),
