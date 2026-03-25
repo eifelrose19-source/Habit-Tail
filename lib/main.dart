@@ -143,7 +143,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) =>
             setState(() => _selectedIndex = index),
-        indicatorColor: softIris.withOpacity(0.3),
+        indicatorColor: softIris.withValues(alpha: 0.3),
         destinations: const [
           NavigationDestination(
               icon: Icon(Icons.home_rounded), label: 'Home'),
