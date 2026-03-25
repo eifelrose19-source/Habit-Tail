@@ -42,7 +42,7 @@ class RedemptionService {
     final log = RedemptionLogModel(
       logId: '', // Firestore generates this ID on create
       familyId: familyId, 
-      claimedBy: claimedBy,
+      childId: claimedBy,
       timestamp: DateTime.now(), // Fixed: Use 'timestamp' to match Model
       rewardId: rewardId,
       status: status,
