@@ -92,10 +92,11 @@ class CreateParentalPin extends StatelessWidget {
                   context: context,
                   label: "Create Pin",
                   onTap: () {
-                    Clipboard.setData(ClipboardData(text: familyCode)).then((_) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                    final messenger = ScaffoldMessenger.of(context);
+                    Clipboard.setData(const ClipboardData(text: familyCode)).then((_) {
+                      messenger.showSnackBar(
                         const SnackBar(
-                          content: Text("Family code copied to clipboard!"),
+                          content: Text("Created Pin!"),
                           backgroundColor: midnightPlum,
                         ),
                       );
