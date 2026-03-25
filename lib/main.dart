@@ -3,7 +3,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'firebase_options.dart';
-
 // Authenticated Screen Imports
 import 'screens/auth/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
@@ -33,11 +32,11 @@ class HabitTailApp extends StatelessWidget {
   const HabitTailApp({super.key});
 
 // --- HabitTail Color Palette ---
-static const Color softIris = Color(0xFFD0BFFF);    // Primary
-static const Color blushPink = Color(0xFFFFADBC);   // Secondary
-static const Color electricSky = Color(0xFF98E4FF);       // Accent
-static const Color pureWhite = Color(0xFFFFFFFF);         // Surface
-static const Color midnightPlum = Color(0xFF3F2E5A);      // Deep Text
+static const Color softIris    = Color(0xFFD0BFFF);   // Primary
+static const Color blushPink   = Color(0xFFFFADBC);   // Secondary
+static const Color electricSky = Color(0xFF98E4FF);   // Accent
+static const Color pureWhite   = Color(0xFFFFFFFF);   // Surface
+static const Color midnightPlum = Color(0xFF3F2E5A);  // Deep Text
 
   @override
   Widget build(BuildContext context) {
