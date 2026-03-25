@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'firebase_options.dart';
 
 // --- Color Palette ---
-import 'colors.dart';
+import 'theme/colors.dart';
 
 // --- Screen Imports ---
 import 'screens/auth/splash_screen.dart';
