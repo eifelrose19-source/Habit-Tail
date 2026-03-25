@@ -130,14 +130,17 @@ class AuthService {
     }
   }
 
+  /// Sends a verification email to the new address before updating.
+  /// User must be recently authenticated before calling this.
   Future<void> updateEmail(String newEmail) async {
     try {
-      await _auth.currentUser?.updateEmail(newEmail);
+      await _auth.currentUser?.verifyBeforeUpdateEmail(newEmail);
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     }
   }
 
+  /// Updates password. Requires recent login — call reauthenticate() first.
   Future<void> updatePassword(String newPassword) async {
     try {
       await _auth.currentUser?.updatePassword(newPassword);
@@ -151,7 +154,6 @@ class AuthService {
     try {
       final userId = _auth.currentUser?.uid;
       if (userId != null) {
-        // Corrected: Now calls the specific method in UserService
         await _userService.deleteUserProfile(userId);
         await _auth.currentUser?.delete();
       }
