@@ -4,8 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'firebase_options.dart';
 
-// --- Color Palette ---
-import 'theme/colors.dart';
+// --- Theme ---
+import 'theme/app_theme.dart';
 
 // --- Screen Imports ---
 import 'screens/auth/splash_screen.dart';
@@ -44,63 +44,33 @@ class HabitTailApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: softIris,
-          primary: softIris,
-          secondary: blushPink,
-          tertiary: electricSky,
-          surface: pureWhite,
-          onPrimary: midnightPlum,
-          onSecondary: midnightPlum,
-          onSurface: midnightPlum,
+          seedColor: AppTheme.softIris,
+          primary: AppTheme.softIris,
+          secondary: AppTheme.electricSky,
+          surface: Colors.white,
+          onPrimary: AppTheme.midnightPlum,
+          onSecondary: AppTheme.midnightPlum,
+          onSurface: AppTheme.midnightPlum,
         ),
         fontFamily: 'Quicksand',
         textTheme: const TextTheme(
-          displayLarge: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: midnightPlum,
-          ),
-          headlineMedium: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
-            color: midnightPlum,
-          ),
-          bodyLarge: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: midnightPlum,
-          ),
-          labelLarge: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: midnightPlum,
-          ),
-          bodySmall: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: midnightPlum,
-          ),
+          displayLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.bold,    color: AppTheme.midnightPlum),
+          headlineMedium: TextStyle(fontSize: 24, fontWeight: FontWeight.w600,  color: AppTheme.midnightPlum),
+          bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w500,       color: AppTheme.midnightPlum),
+          labelLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,      color: AppTheme.midnightPlum),
+          bodySmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w500,       color: AppTheme.midnightPlum),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            elevation: 0,
-            backgroundColor: softIris,
-            foregroundColor: midnightPlum,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            minimumSize: const Size(double.infinity, 52),
-          ),
+          style: AppTheme.elevatedButtonStyle,
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: pureWhite,
+          fillColor: Colors.white,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
       ),
       initialRoute: '/',
@@ -141,18 +111,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) =>
-            setState(() => _selectedIndex = index),
-        indicatorColor: softIris.withValues(alpha: 0.3),
+        onDestinationSelected: (index) => setState(() => _selectedIndex = index),
+        indicatorColor: AppTheme.softIris.withValues(alpha: 0.3),
         destinations: const [
-          NavigationDestination(
-              icon: Icon(Icons.home_rounded), label: 'Home'),
-          NavigationDestination(
-              icon: Icon(Icons.task_alt_rounded), label: 'Tasks'),
-          NavigationDestination(
-              icon: Icon(Icons.card_giftcard_rounded), label: 'Rewards'),
-          NavigationDestination(
-              icon: Icon(Icons.pets_rounded), label: 'Pets'),
+          NavigationDestination(icon: Icon(Icons.home_rounded),         label: 'Home'),
+          NavigationDestination(icon: Icon(Icons.task_alt_rounded),     label: 'Tasks'),
+          NavigationDestination(icon: Icon(Icons.card_giftcard_rounded),label: 'Rewards'),
+          NavigationDestination(icon: Icon(Icons.pets_rounded),         label: 'Pets'),
         ],
       ),
     );
