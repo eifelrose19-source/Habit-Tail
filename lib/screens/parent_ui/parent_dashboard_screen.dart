@@ -1,24 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:habit_tail/theme/app_theme.dart';
 
 class ParentDashboardScreen extends StatelessWidget {
   const ParentDashboardScreen({super.key});
 
-  //Color Palette for HabitTail
-  static const Color softIris = Color(0xFFD0BFFF);
-  static const Color electricSky = Color(0xFF98E4FF);
-  static const Color midnightPlum = Color(0xFF3F2E5A);
   static const Color beigeBackground = Color(0xFFF0EAD6);
 
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: beigeBackground,
       body: Column(
         children: [
-          //Header Section
           _buildHeader(),
-
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -26,32 +20,16 @@ class ParentDashboardScreen extends StatelessWidget {
                 children: [
                   const SizedBox(height: 20),
 
-                  //Pets Section
-                  Text(
-                    'Pets Dashboard',
-                    style: GoogleFonts.quicksand(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: midnightPlum,
-                    ),
-                  ),
+                  Text('Pets Dashboard', style: AppTheme.bodyText(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 15),
                   _buildPetList(),
 
                   const SizedBox(height: 10),
-                  const Icon(Icons.add_circle, color: softIris, size: 35),
+                  const Icon(Icons.add_circle, color: AppTheme.softIris, size: 35),
 
                   const SizedBox(height: 30),
 
-                  //Tasks Section
-                  Text(
-                    'Tasks Awaiting Review',
-                    style: GoogleFonts.quicksand(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: midnightPlum,
-                    ),
-                  ),
+                  Text('Tasks Awaiting Review', style: AppTheme.bodyText(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 15),
                   _buildTaskItem("Task: Feed Pet", "Submitted by: Tommy", "+50 Gold"),
                   _buildTaskItem("Task: Feed Pet", "Submitted by: Tommy", "+50 Gold"),
@@ -62,45 +40,26 @@ class ParentDashboardScreen extends StatelessWidget {
               ),
             ),
           ),
-          // Bottom Management Section
           _buildManagementSection(context),
         ],
       ),
     );
   }
 
-  //Widget Helpers
-
   Widget _buildHeader() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.only(top:60, bottom: 20, left: 25, right: 25),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [softIris, Color(0xFFE0D4FC)],
-        ),
-      ),
+      padding: const EdgeInsets.only(top: 60, bottom: 20, left: 25, right: 25),
+      decoration: AppTheme.backgroundGradient,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Welcome,',
-              style: GoogleFonts.quicksand(fontSize: 18, color: midnightPlum),
-            ),
-            Text(
-              'Sandra!',
-              style: GoogleFonts.quicksand(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: midnightPlum,
-              ),
-            ),
-          ],
+            children: [
+              Text('Welcome,', style: AppTheme.bodyText(fontSize: 18)),
+              Text('Sandra!', style: AppTheme.bodyText(fontSize: 24, fontWeight: FontWeight.bold)),
+            ],
           ),
           Row(
             children: [
@@ -108,7 +67,7 @@ class ParentDashboardScreen extends StatelessWidget {
               const SizedBox(width: 15),
               _buildHeaderIcon(Icons.settings, "Settings"),
             ],
-          )
+          ),
         ],
       ),
     );
@@ -117,15 +76,8 @@ class ParentDashboardScreen extends StatelessWidget {
   Widget _buildHeaderIcon(IconData icon, String label) {
     return Column(
       children: [
-        Icon(icon, color: midnightPlum, size: 28),
-        Text(
-          label,
-          style: GoogleFonts.quicksand(
-            fontSize: 12, 
-            color: midnightPlum, 
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        Icon(icon, color: AppTheme.midnightPlum, size: 28),
+        Text(label, style: AppTheme.bodyText(fontSize: 12, fontWeight: FontWeight.bold)),
       ],
     );
   }
@@ -146,39 +98,32 @@ class ParentDashboardScreen extends StatelessWidget {
       width: 90,
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: electricSky,
+        color: AppTheme.electricSky,
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1), 
-            blurRadius: 4, 
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 4,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-    child: Column(
-      children: [
-        Container(
-          height: 60,
-          width: 60,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
+      child: Column(
+        children: [
+          Container(
+            height: 60,
+            width: 60,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(Icons.pets, color: color), // TODO: Replace with image asset
           ),
-          child: Icon(Icons.pets, color: color), //ToDo Replace with image asset
-        ),
-        const SizedBox(height: 5),
-        Text(
-          name,
-          style: GoogleFonts.quicksand(
-            fontSize: 12, 
-            fontWeight: FontWeight.bold, 
-            color: midnightPlum,
-          ),
-        ),
-      ],
-    ),
-   );
+          const SizedBox(height: 5),
+          Text(name, style: AppTheme.bodyText(fontSize: 12, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
   }
 
   Widget _buildTaskItem(String title, String subtitle, String reward) {
@@ -186,7 +131,7 @@ class ParentDashboardScreen extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
       decoration: BoxDecoration(
-        color: electricSky.withValues(alpha: 0.6),
+        color: AppTheme.electricSky.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(15),
       ),
       child: Row(
@@ -195,29 +140,16 @@ class ParentDashboardScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title, 
-                  style: GoogleFonts.quicksand(fontWeight: FontWeight.bold, color: midnightPlum),
-                ),
-                Text(
-                  subtitle, 
-                  style: GoogleFonts.quicksand(fontSize: 10, color: midnightPlum),
-                ),
+                Text(title, style: AppTheme.bodyText(fontWeight: FontWeight.bold)),
+                Text(subtitle, style: AppTheme.bodyText(fontSize: 10)),
               ],
             ),
           ),
-          Text(
-            reward, 
-            style: GoogleFonts.quicksand(
-              fontSize: 12, 
-              fontWeight: FontWeight.bold, 
-              color: Colors.orange,
-            ),
-          ),
+          Text(reward, style: AppTheme.bodyText(fontSize: 12, fontWeight: FontWeight.bold).copyWith(color: Colors.orange)),
           const SizedBox(width: 10),
-          const Icon(Icons.cancel_outlined, color: softIris),
+          const Icon(Icons.cancel_outlined, color: AppTheme.softIris),
           const SizedBox(width: 5),
-          const Icon(Icons.check_circle_outline, color: softIris),
+          const Icon(Icons.check_circle_outline, color: AppTheme.softIris),
         ],
       ),
     );
@@ -230,19 +162,12 @@ class ParentDashboardScreen extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFFE0D4FC), softIris],
+          colors: [AppTheme.irisLight, AppTheme.softIris],
         ),
       ),
       child: Column(
         children: [
-          Text(
-            'Management',
-            style: GoogleFonts.quicksand(
-              fontSize: 18, 
-              fontWeight: FontWeight.bold, 
-              color: midnightPlum,
-            ),
-          ),
+          Text('Management', style: AppTheme.bodyText(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 15),
           Row(
             children: [
@@ -250,7 +175,7 @@ class ParentDashboardScreen extends StatelessWidget {
               const SizedBox(width: 15),
               Expanded(child: _buildSmallButton("Manage Rewards")),
             ],
-          )
+          ),
         ],
       ),
     );
@@ -260,18 +185,11 @@ class ParentDashboardScreen extends StatelessWidget {
     return Container(
       height: 45,
       decoration: BoxDecoration(
-        color: electricSky,
+        color: AppTheme.electricSky,
         borderRadius: BorderRadius.circular(12),
       ),
       alignment: Alignment.center,
-      child: Text(
-        label,
-        style: GoogleFonts.quicksand(
-          fontSize: 14, 
-          fontWeight: FontWeight.bold, 
-          color: midnightPlum,
-        ),
-      ),
+      child: Text(label, style: AppTheme.bodyText(fontSize: 14, fontWeight: FontWeight.bold)),
     );
   }
 }
