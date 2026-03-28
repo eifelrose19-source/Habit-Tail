@@ -4,12 +4,10 @@ import 'package:habit_tail/theme/app_theme.dart';
 class ParentDashboardScreen extends StatelessWidget {
   const ParentDashboardScreen({super.key});
 
-  static const Color beigeBackground = Color(0xFFF0EAD6);
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: beigeBackground,
+      backgroundColor: AppTheme.beigeBackground,
       body: Column(
         children: [
           _buildHeader(),

@@ -9,7 +9,8 @@ class AppTheme {
   static const Color electricSky = Color(0xFF98E4FF); // Button Background
   static const Color midnightPlum = Color(0xFF3F2E5A); // Text Color
   static const Color irisLight   = Color(0xFFE0D4FC); // Gradient End
-  
+  // Background Colors
+static const Color beigeBackground = Color(0xFFF0EAD6); // Dashboard background
   //Background Gradient
   static const BoxDecoration backgroundGradient = BoxDecoration(
     gradient: LinearGradient(
