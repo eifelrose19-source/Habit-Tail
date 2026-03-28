@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:habit_tail/theme/app_theme.dart';
 
 class FamilyDashboardScreen extends StatelessWidget {
@@ -57,8 +58,9 @@ class FamilyDashboardScreen extends StatelessWidget {
   }
 
   Widget _buildFamilyMembersSection() {
-    // TODO: Replace hardcoded family members with real data from Firestore
+    // TODO: Replace hardcoded family members and family ID with real data from Firestore
     // Query users collection where family_id matches current family and map to cards
+    const String familyId = 'AqGv5xf5oXk3OOmnUqlM';
     return Container(
       color: AppTheme.beigeBackground,
       padding: const EdgeInsets.all(20),
@@ -76,7 +78,57 @@ class FamilyDashboardScreen extends StatelessWidget {
               _buildFamilyMemberCard('Emily', '200 Gold'),
             ],
           ),
+          const SizedBox(height: 15),
+          _buildFamilyCodeSection(familyId),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFamilyCodeSection(String familyId) {
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppTheme.electricSky.withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Family ID:',
+                style: AppTheme.bodyText(fontSize: 13, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '"$familyId"',
+                    style: AppTheme.bodyText(fontSize: 12),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: familyId));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Family ID copied!',
+                            style: AppTheme.bodyText(fontSize: 13)),
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  style: AppTheme.elevatedButtonStyle,
+                  icon: const Icon(Icons.copy, size: 14),
+                  label: Text('Copy',
+                      style: AppTheme.bodyText(fontSize: 12, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -211,8 +263,8 @@ class FamilyDashboardScreen extends StatelessWidget {
     // hasPartner: check if a second user with role: parent exists in this family
     // childCount: count users with role: child in this family
     // members: list of all user documents in this family
-    const bool hasPartner = true;
-    const int childCount = 3;
+    bool hasPartner = true;
+    int childCount = 3;
     final List<Map<String, dynamic>> members = [
       {'name': 'David', 'role': 'parent', 'claimed': true},
       {'name': 'Tommy', 'role': 'child', 'claimed': true},
@@ -239,10 +291,7 @@ class FamilyDashboardScreen extends StatelessWidget {
             const SizedBox(height: 20),
 
             // Add Partner button - only show if no partner yet
-            // ignore: dead_code
-            //TODO: Replace with real Firestore check - bool hasPartner = familyMembers.any((m) => m['role'] == 'parent')
-            // ignore: dead_code  
-            // TODO: Replace with real Firestore check - int childCount = familyMembers.where((m) => m['role'] == 'child').length
+            // TODO: Replace with real Firestore check - bool hasPartner = familyMembers.any((m) => m['role'] == 'parent')
             if (!hasPartner) ...[
               AppTheme.buildButton(
                 context: modalContext,
@@ -253,6 +302,7 @@ class FamilyDashboardScreen extends StatelessWidget {
             ],
 
             // Add Child button - only show if less than 3 children
+            // TODO: Replace with real Firestore check - int childCount = familyMembers.where((m) => m['role'] == 'child').length
             if (childCount < 3) ...[
               AppTheme.buildButton(
                 context: modalContext,
