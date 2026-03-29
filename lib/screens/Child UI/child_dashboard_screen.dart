@@ -29,7 +29,7 @@ class ChildDashboardScreen extends StatelessWidget {
                         Text(
                           'Habit\nTail',
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.pinkyCupid(
+                          style: GoogleFonts.quicksand(
                             fontSize: 28,
                             color: const Color(0xFFFFADBC),
                             height: 0.8,
