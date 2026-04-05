@@ -8,8 +8,8 @@ class UserModel {
   final String name;
   final int totalPoints;
   final bool isParent;
-  final String? parentId; // Added for child link
-  final List<String> childrenIds; // Added for parent link
+  final String? parentId;
+  final List<String> childrenIds;
 
   UserModel({
     required this.userId,
@@ -21,37 +21,42 @@ class UserModel {
     this.childrenIds = const [],
   });
 
-  /// Factory constructor 
   factory UserModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};
 
     return UserModel(
       userId: doc.id,
       familyId: data['family_id'] ?? "",
-      name: data['name'] ?? "",
+      // FIXED: was data['name'] — Firestore field is 'display_name'
+      name: data['display_name'] ?? "",
       totalPoints: (data['total_points'] as num?)?.toInt() ?? 0,
-      isParent: data['is_parent'] ?? false,
+      // FIXED: was data['is_parent'] (bool) — Firestore uses role: "parent"/"child" (string)
+      isParent: data['role'] == 'parent',
       parentId: data['parent_id'],
-      childrenIds: List<String>.from(data['children_ids'] ?? []),
+      // FIXED: was data['children_ids'] — Firestore field is 'children_id'
+      childrenIds: List<String>.from(data['children_id'] ?? []),
     );
   }
 
-  /// Converts model to Map for Firestore 
   Map<String, dynamic> toFirestore() {
     return {
       'family_id': familyId,
-      'name': name,
+      // FIXED: was 'name' — Firestore field is 'display_name'
+      'display_name': name,
       'total_points': totalPoints,
-      'is_parent': isParent,
+      // FIXED: was 'is_parent': isParent — Firestore uses 'role' string
+      'role': isParent ? 'parent' : 'child',
       if (parentId != null) 'parent_id': parentId,
-      'children_ids': childrenIds,
+      // FIXED: was 'children_ids' — Firestore field is 'children_id'
+      'children_id': childrenIds,
     };
   }
 
-  /// Getter to determine dashboard type based on role
-  DashboardType get dashboardType => isParent ? DashboardType.parent : DashboardType.child;
+  // UNCHANGED: everything below this line is correct and untouched
 
-  /// Returns a new instance with updated fields for Riverpod state management
+  DashboardType get dashboardType =>
+      isParent ? DashboardType.parent : DashboardType.child;
+
   UserModel copyWith({
     String? userId,
     String? familyId,
@@ -82,8 +87,6 @@ class UserModel {
   int get hashCode => userId.hashCode;
 
   @override
-  String toString() {
-    return 'UserModel(name: $name, isParent: $isParent, points: $totalPoints)';
-  }
+  String toString() =>
+      'UserModel(name: $name, isParent: $isParent, points: $totalPoints)';
 }
-

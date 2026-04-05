@@ -345,7 +345,7 @@ class _ParentSettingsScreenState extends State<ParentSettingsScreen> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: AppTheme.softIris,
+            activeThumbColor: AppTheme.softIris,
           ),
         ],
       ),
