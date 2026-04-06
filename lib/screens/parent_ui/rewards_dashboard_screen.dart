@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:habit_tail/theme/app_theme.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:habit_tail/services/auth_service.dart';
 
 class RewardsDashboardScreen extends StatefulWidget {
   const RewardsDashboardScreen({super.key});
@@ -9,22 +11,34 @@ class RewardsDashboardScreen extends StatefulWidget {
 }
 
 class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
+  final AuthService _authService = AuthService();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   final TextEditingController _rewardTitleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _costController = TextEditingController();
 
-  // TODO: Replace hardcoded rewards with real data from Firestore
-  // Query rewards collection where family_id matches, ordered by current sort
-  final List<Map<String, dynamic>> _rewards = [
-    {'title': '30 Mins Game Time', 'description': 'Unlock 30mins of video game for the day', 'cost': 200, 'status': 'Claimed'},
-    {'title': '30 Mins Game Time', 'description': 'Unlock 30mins of video game for the day', 'cost': 200, 'status': 'Claimed'},
-    {'title': '30 Mins Game Time', 'description': 'Unlock 30mins of video game for the day', 'cost': 200, 'status': 'Claimed'},
-    {'title': '30 Mins Game Time', 'description': 'Unlock 30mins of video game for the day', 'cost': 200, 'status': 'Claimed'},
-    {'title': '30 Mins Game Time', 'description': 'Unlock 30mins of video game for the day', 'cost': 200, 'status': 'Unclaimed'},
-    {'title': '30 Mins Game Time', 'description': 'Unlock 30mins of video game for the day', 'cost': 200, 'status': 'Unclaimed'},
-  ];
-
   String _sortBy = 'Status';
+  String? _familyId;
+  String _parentName = 'Parent';
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
+    final user = _authService.currentUser;
+    if (user != null) {
+      final token = await user.getIdTokenResult();
+      if (!mounted) return;
+      setState(() {
+        _familyId = token.claims?['family_id'] as String?;
+        _parentName = user.displayName ?? 'Parent';
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -42,20 +56,43 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
         children: [
           _buildHeader(),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  const SizedBox(height: 20),
-                  _buildCreateRewardSection(),
-                  const SizedBox(height: 15),
-                  _buildSortButton(),
-                  const SizedBox(height: 10),
-                  ..._rewards.map((reward) => _buildRewardCard(reward)),
-                  const SizedBox(height: 40),
-                ],
-              ),
-            ),
+            child: _familyId == null
+                ? const Center(child: CircularProgressIndicator())
+                : StreamBuilder<QuerySnapshot>(
+                    stream: _getRewardsStream(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      final rewards = snapshot.data?.docs ?? [];
+
+                      return SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 20),
+                            _buildCreateRewardSection(),
+                            const SizedBox(height: 15),
+                            _buildSortButton(),
+                            const SizedBox(height: 10),
+                            if (rewards.isEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 20),
+                                child: Text('No rewards found.',
+                                    style: AppTheme.bodyText(fontSize: 14)),
+                              ),
+                            ...rewards.map((doc) {
+                              final data = doc.data() as Map<String, dynamic>;
+                              data['id'] = doc.id; // Add ID for operations
+                              return _buildRewardCard(data);
+                            }),
+                            const SizedBox(height: 40),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
           ),
           _buildBottomBar(),
         ],
@@ -63,8 +100,21 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
     );
   }
 
+  Stream<QuerySnapshot> _getRewardsStream() {
+    Query query = _firestore
+        .collection('rewards')
+        .where('family_id', isEqualTo: _familyId);
+
+    if (_sortBy == 'Claimed') {
+      query = query.where('status', isEqualTo: 'Claimed');
+    } else if (_sortBy == 'Unclaimed') {
+      query = query.where('status', isEqualTo: 'Unclaimed');
+    }
+
+    return query.snapshots();
+  }
+
   Widget _buildHeader() {
-    // TODO: Replace 'Sandra' with real parent display_name from Firestore
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.only(top: 60, bottom: 20, left: 25, right: 25),
@@ -76,7 +126,9 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Welcome,', style: AppTheme.bodyText(fontSize: 18)),
-              Text('Sandra!', style: AppTheme.bodyText(fontSize: 24, fontWeight: FontWeight.bold)),
+              Text('$_parentName!',
+                  style: AppTheme.bodyText(
+                      fontSize: 24, fontWeight: FontWeight.bold)),
             ],
           ),
           Row(
@@ -95,7 +147,9 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
     return Column(
       children: [
         Icon(icon, color: AppTheme.midnightPlum, size: 28),
-        Text(label, style: AppTheme.bodyText(fontSize: 12, fontWeight: FontWeight.bold)),
+        Text(label,
+            style:
+                AppTheme.bodyText(fontSize: 12, fontWeight: FontWeight.bold)),
       ],
     );
   }
@@ -112,7 +166,8 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
         children: [
           Center(
             child: Text('Create Reward',
-                style: AppTheme.bodyText(fontSize: 16, fontWeight: FontWeight.bold)),
+                style: AppTheme.bodyText(
+                    fontSize: 16, fontWeight: FontWeight.bold)),
           ),
           const SizedBox(height: 10),
           _buildInputField('Reward Title', _rewardTitleController),
@@ -133,7 +188,8 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 8),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide.none,
@@ -148,14 +204,27 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
               Align(
                 alignment: Alignment.bottomCenter,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // TODO: Add reward to Firestore
-                    // - Create reward document with title, description, cost, family_id, status: Unclaimed
-                    // - Clear form fields after adding
+                  onPressed: () async {
+                    if (_rewardTitleController.text.isEmpty ||
+                        _familyId == null) return;
+
+                    await _firestore.collection('rewards').add({
+                      'title': _rewardTitleController.text,
+                      'description': _descriptionController.text,
+                      'cost': int.tryParse(_costController.text) ?? 0,
+                      'family_id': _familyId,
+                      'status': 'Unclaimed',
+                      'created_at': FieldValue.serverTimestamp(),
+                    });
+
+                    _rewardTitleController.clear();
+                    _descriptionController.clear();
+                    _costController.clear();
                   },
                   style: AppTheme.elevatedButtonStyle,
                   child: Text('Add Reward',
-                      style: AppTheme.bodyText(fontSize: 12, fontWeight: FontWeight.bold)),
+                      style: AppTheme.bodyText(
+                          fontSize: 12, fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
@@ -165,7 +234,8 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
     );
   }
 
-  Widget _buildInputField(String hint, TextEditingController controller, {int maxLines = 1}) {
+  Widget _buildInputField(String hint, TextEditingController controller,
+      {int maxLines = 1}) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
@@ -174,7 +244,8 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
         hintStyle: AppTheme.bodyText(fontSize: 13),
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide.none,
@@ -192,7 +263,8 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
         style: AppTheme.elevatedButtonStyle,
         icon: const Icon(Icons.sort, size: 16),
         label: Text('Sort by: $_sortBy',
-            style: AppTheme.bodyText(fontSize: 12, fontWeight: FontWeight.bold)),
+            style:
+                AppTheme.bodyText(fontSize: 12, fontWeight: FontWeight.bold)),
       ),
     );
   }
@@ -213,8 +285,10 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Reward: ${reward['title']}',
-                    style: AppTheme.bodyText(fontSize: 12, fontWeight: FontWeight.bold)),
-                Text('Cost: ${reward['cost']}', style: AppTheme.bodyText(fontSize: 11)),
+                    style: AppTheme.bodyText(
+                        fontSize: 12, fontWeight: FontWeight.bold)),
+                Text('Cost: ${reward['cost']}',
+                    style: AppTheme.bodyText(fontSize: 11)),
                 Text(
                   'Status: ${reward['status']}',
                   style: AppTheme.bodyText(fontSize: 11).copyWith(
@@ -229,9 +303,11 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
             children: [
               if (isClaimed)
                 ElevatedButton(
-                  onPressed: () {
-                    // TODO: Update reward status to Unclaimed in Firestore
-                    setState(() => reward['status'] = 'Unclaimed');
+                  onPressed: () async {
+                    await _firestore
+                        .collection('rewards')
+                        .doc(reward['id'])
+                        .update({'status': 'Unclaimed'});
                   },
                   style: AppTheme.elevatedButtonStyle.copyWith(
                     padding: WidgetStateProperty.all(
@@ -239,7 +315,8 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
                     ),
                   ),
                   child: Text('Renew',
-                      style: AppTheme.bodyText(fontSize: 10, fontWeight: FontWeight.bold)),
+                      style: AppTheme.bodyText(
+                          fontSize: 10, fontWeight: FontWeight.bold)),
                 ),
               ElevatedButton(
                 onPressed: () => _showEditRewardModal(reward),
@@ -249,7 +326,8 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
                   ),
                 ),
                 child: Text('Edit',
-                    style: AppTheme.bodyText(fontSize: 10, fontWeight: FontWeight.bold)),
+                    style: AppTheme.bodyText(
+                        fontSize: 10, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -270,7 +348,8 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('Sort Rewards',
-                style: AppTheme.bodyText(fontSize: 18, fontWeight: FontWeight.bold)),
+                style: AppTheme.bodyText(
+                    fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 20),
             ...['Status', 'Claimed', 'Unclaimed'].map((option) => ListTile(
                   leading: Icon(
@@ -279,10 +358,10 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
                         : Icons.radio_button_off,
                     color: AppTheme.midnightPlum,
                   ),
-                  title: Text('Show $option', style: AppTheme.bodyText(fontSize: 14)),
+                  title: Text('Show $option',
+                      style: AppTheme.bodyText(fontSize: 14)),
                   onTap: () {
                     setState(() => _sortBy = option);
-                    // TODO: Re-query Firestore filtering by status
                     Navigator.pop(modalContext);
                   },
                 )),
@@ -318,7 +397,8 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('Edit Reward',
-                style: AppTheme.bodyText(fontSize: 18, fontWeight: FontWeight.bold)),
+                style: AppTheme.bodyText(
+                    fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 15),
             _buildInputField('Reward Title', titleController),
             const SizedBox(height: 8),
@@ -329,8 +409,13 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
             AppTheme.buildButton(
               context: modalContext,
               label: 'Save Changes',
-              onTap: () {
-                // TODO: Update reward document in Firestore with new values
+              onTap: () async {
+                await _firestore.collection('rewards').doc(reward['id']).update({
+                  'title': titleController.text,
+                  'description': descController.text,
+                  'cost': int.tryParse(costController.text) ?? 0,
+                });
+                if (!mounted) return;
                 Navigator.pop(modalContext);
               },
             ),
@@ -338,8 +423,12 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
             AppTheme.buildButton(
               context: modalContext,
               label: 'Delete Reward',
-              onTap: () {
-                // TODO: Delete reward document from Firestore
+              onTap: () async {
+                await _firestore
+                    .collection('rewards')
+                    .doc(reward['id'])
+                    .delete();
+                if (!mounted) return;
                 Navigator.pop(modalContext);
               },
             ),
