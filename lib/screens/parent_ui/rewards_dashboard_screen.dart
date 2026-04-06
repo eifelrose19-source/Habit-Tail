@@ -32,7 +32,9 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
     final user = _authService.currentUser;
     if (user != null) {
       final token = await user.getIdTokenResult();
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _familyId = token.claims?['family_id'] as String?;
         _parentName = user.displayName ?? 'Parent';
@@ -76,15 +78,16 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
                             const SizedBox(height: 15),
                             _buildSortButton(),
                             const SizedBox(height: 10),
-                            if (rewards.isEmpty)
+                            if (rewards.isEmpty) ...[
                               Padding(
                                 padding: const EdgeInsets.only(top: 20),
                                 child: Text('No rewards found.',
                                     style: AppTheme.bodyText(fontSize: 14)),
                               ),
+                            ],
                             ...rewards.map((doc) {
                               final data = doc.data() as Map<String, dynamic>;
-                              data['id'] = doc.id; // Add ID for operations
+                              data['id'] = doc.id;
                               return _buildRewardCard(data);
                             }),
                             const SizedBox(height: 40),
@@ -206,7 +209,9 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
                 child: ElevatedButton(
                   onPressed: () async {
                     if (_rewardTitleController.text.isEmpty ||
-                        _familyId == null) return;
+                        _familyId == null) {
+                      return;
+                    }
 
                     await _firestore.collection('rewards').add({
                       'title': _rewardTitleController.text,
@@ -301,7 +306,7 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
           ),
           Column(
             children: [
-              if (isClaimed)
+              if (isClaimed) ...[
                 ElevatedButton(
                   onPressed: () async {
                     await _firestore
@@ -310,19 +315,20 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
                         .update({'status': 'Unclaimed'});
                   },
                   style: AppTheme.elevatedButtonStyle.copyWith(
-                    padding: WidgetStateProperty.all(
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const WidgetStatePropertyAll(
+                      EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     ),
                   ),
                   child: Text('Renew',
                       style: AppTheme.bodyText(
                           fontSize: 10, fontWeight: FontWeight.bold)),
                 ),
+              ],
               ElevatedButton(
                 onPressed: () => _showEditRewardModal(reward),
                 style: AppTheme.elevatedButtonStyle.copyWith(
-                  padding: WidgetStateProperty.all(
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const WidgetStatePropertyAll(
+                    EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   ),
                 ),
                 child: Text('Edit',
@@ -361,7 +367,9 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
                   title: Text('Show $option',
                       style: AppTheme.bodyText(fontSize: 14)),
                   onTap: () {
-                    setState(() => _sortBy = option);
+                    setState(() {
+                      _sortBy = option;
+                    });
                     Navigator.pop(modalContext);
                   },
                 )),
@@ -391,7 +399,7 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
           left: 25,
           right: 25,
           top: 25,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 25,
+          bottom: MediaQuery.of(modalContext).viewInsets.bottom + 25,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -410,13 +418,17 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
               context: modalContext,
               label: 'Save Changes',
               onTap: () async {
-                await _firestore.collection('rewards').doc(reward['id']).update({
+                await _firestore
+                    .collection('rewards')
+                    .doc(reward['id'])
+                    .update({
                   'title': titleController.text,
                   'description': descController.text,
                   'cost': int.tryParse(costController.text) ?? 0,
                 });
-                if (!mounted) return;
-                Navigator.pop(modalContext);
+                if (modalContext.mounted) {
+                  Navigator.pop(modalContext);
+                }
               },
             ),
             const SizedBox(height: 10),
@@ -428,8 +440,9 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
                     .collection('rewards')
                     .doc(reward['id'])
                     .delete();
-                if (!mounted) return;
-                Navigator.pop(modalContext);
+                if (modalContext.mounted) {
+                  Navigator.pop(modalContext);
+                }
               },
             ),
             const SizedBox(height: 10),
@@ -452,7 +465,9 @@ class _RewardsDashboardScreenState extends State<RewardsDashboardScreen> {
       child: Row(
         children: [
           IconButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              Navigator.pop(context);
+            },
             icon: const Icon(Icons.arrow_back, color: AppTheme.midnightPlum),
           ),
         ],
