@@ -154,7 +154,7 @@ class ChildDashboardScreen extends StatelessWidget {
             image: DecorationImage(image: AssetImage(imagePath), fit: BoxFit.cover),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.midnightPlum.withOpacity(0.1),
+                color: AppTheme.midnightPlum.withValues(alpha: 0.1),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -176,7 +176,7 @@ class ChildDashboardScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.midnightPlum.withOpacity(0.05),
+            color: AppTheme.midnightPlum.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
