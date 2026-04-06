@@ -56,10 +56,11 @@ class UserRepository {
 
   /// One-time fetch of children in a family for the parent dashboard
   Future<List<UserModel>> getFamilyChildren(String familyId) async {
+    // FIXED: Changed 'is_parent' (bool) to 'role' (String) to match your Firestore
     final snapshot = await _firestore
         .collection('users')
         .where('family_id', isEqualTo: familyId)
-        .where('is_parent', isEqualTo: false)
+        .where('role', isEqualTo: 'child') 
         .get();
     
     return snapshot.docs
