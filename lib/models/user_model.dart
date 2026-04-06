@@ -10,6 +10,8 @@ class UserModel {
   final bool isParent;
   final String? parentId;
   final List<String> childrenIds;
+  final bool claimed;
+  final String? parentalPin;
 
   UserModel({
     required this.userId,
@@ -17,9 +19,16 @@ class UserModel {
     required this.name,
     required this.totalPoints,
     required this.isParent,
+    this.claimed = false,
     this.parentId,
     this.childrenIds = const [],
+    this.parentalPin,
   });
+
+  // --- UI Bridge Getters ---
+  // These allow the UI to call .displayName and .role without errors
+  String get displayName => name;
+  String get role => isParent ? 'parent' : 'child';
 
   factory UserModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};
@@ -27,13 +36,12 @@ class UserModel {
     return UserModel(
       userId: doc.id,
       familyId: data['family_id'] ?? "",
-      // FIXED: was data['name'] — Firestore field is 'display_name'
       name: data['display_name'] ?? "",
       totalPoints: (data['total_points'] as num?)?.toInt() ?? 0,
-      // FIXED: was data['is_parent'] (bool) — Firestore uses role: "parent"/"child" (string)
       isParent: data['role'] == 'parent',
       parentId: data['parent_id'],
-      // FIXED: was data['children_ids'] — Firestore field is 'children_id'
+      claimed: data['claimed'] ?? false,
+      parentalPin: data['parentalPin'],
       childrenIds: List<String>.from(data['children_id'] ?? []),
     );
   }
@@ -41,18 +49,15 @@ class UserModel {
   Map<String, dynamic> toFirestore() {
     return {
       'family_id': familyId,
-      // FIXED: was 'name' — Firestore field is 'display_name'
       'display_name': name,
       'total_points': totalPoints,
-      // FIXED: was 'is_parent': isParent — Firestore uses 'role' string
       'role': isParent ? 'parent' : 'child',
+      'claimed': claimed,
       if (parentId != null) 'parent_id': parentId,
-      // FIXED: was 'children_ids' — Firestore field is 'children_id'
+      if (parentalPin != null) 'parentalPin': parentalPin,
       'children_id': childrenIds,
     };
   }
-
-  // UNCHANGED: everything below this line is correct and untouched
 
   DashboardType get dashboardType =>
       isParent ? DashboardType.parent : DashboardType.child;
@@ -65,6 +70,8 @@ class UserModel {
     bool? isParent,
     String? parentId,
     List<String>? childrenIds,
+    bool? claimed,
+    String? parentalPin,
   }) {
     return UserModel(
       userId: userId ?? this.userId,
@@ -74,6 +81,8 @@ class UserModel {
       isParent: isParent ?? this.isParent,
       parentId: parentId ?? this.parentId,
       childrenIds: childrenIds ?? this.childrenIds,
+      claimed: claimed ?? this.claimed,
+      parentalPin: parentalPin ?? this.parentalPin,
     );
   }
 
@@ -88,5 +97,5 @@ class UserModel {
 
   @override
   String toString() =>
-      'UserModel(name: $name, isParent: $isParent, points: $totalPoints)';
+      'UserModel(name: $name, isParent: $isParent, points: $totalPoints, claimed: $claimed)';
 }
