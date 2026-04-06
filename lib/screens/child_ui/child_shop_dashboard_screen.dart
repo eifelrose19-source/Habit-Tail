@@ -2,21 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../theme/app_theme.dart';
+import '../../providers/user_provider.dart'; 
 import 'child_settings_screen.dart';
 import 'child_dashboard_screen.dart';
-
-// TODO: Add rewards from firestore
-// TODO: Update gold available at top to match users available gold
-// TODO: Settings icon to go to settings page
-// TODO: Back button goes to child dashboard
 
 class ChildShopDashboardScreen extends ConsumerWidget {
   const ChildShopDashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Assuming you have a provider for the current child's ID
-    // final childId = ref.watch(childUserProvider).id; 
+    // This returns a UserState object, not an AsyncValue
+    final userState = ref.watch(userProvider);
 
     return Scaffold(
       body: Container(
@@ -26,7 +22,7 @@ class ChildShopDashboardScreen extends ConsumerWidget {
         child: SafeArea(
           child: Column(
             children: [
-              // Header Section
+              // --- Header Section ---
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
                 child: Row(
@@ -46,21 +42,20 @@ class ChildShopDashboardScreen extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        // Dynamic Gold Display from Firestore
-                        StreamBuilder<DocumentSnapshot>(
-                          stream: FirebaseFirestore.instance
-                              .collection('users')
-                              .doc('CURRENT_USER_ID') // Replace with dynamic ID
-                              .snapshots(),
-                          builder: (context, snapshot) {
-                            final gold = snapshot.data?.get('total_points') ?? 0;
-                            final name = snapshot.data?.get('display_name') ?? 'User';
-                            return Text(
-                              '$name 🥥 $gold Gold',
-                              style: AppTheme.bodyText(fontSize: 18, fontWeight: FontWeight.bold),
-                            );
-                          },
-                        ),
+                        // FIXED: Manual check of userState instead of using .when()
+                        if (userState.isLoading)
+                          const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        else if (userState.error != null)
+                          Text('Error loading gold', style: AppTheme.bodyText())
+                        else
+                          Text(
+                            '${userState.user?.displayName ?? 'User'} 🥥 ${userState.user?.totalPoints ?? 0} Gold',
+                            style: AppTheme.bodyText(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
                       ],
                     ),
                     IconButton(
@@ -76,7 +71,7 @@ class ChildShopDashboardScreen extends ConsumerWidget {
                 ),
               ),
 
-              // Main Content Area
+              // --- Main Content Area ---
               Expanded(
                 child: Container(
                   margin: const EdgeInsets.symmetric(horizontal: 15),
@@ -92,25 +87,31 @@ class ChildShopDashboardScreen extends ConsumerWidget {
                         style: AppTheme.bodyText(fontSize: 22, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 10),
-                      // Scrollable Rewards List from Firestore
                       Expanded(
                         child: StreamBuilder<QuerySnapshot>(
                           stream: FirebaseFirestore.instance.collection('rewards').snapshots(),
                           builder: (context, snapshot) {
+                            if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}'));
                             if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
                             
                             final rewards = snapshot.data!.docs;
+
+                            if (rewards.isEmpty) {
+                              return Center(
+                                child: Text('No rewards available', style: AppTheme.bodyText()),
+                              );
+                            }
 
                             return ListView.builder(
                               padding: const EdgeInsets.only(bottom: 20),
                               itemCount: rewards.length,
                               itemBuilder: (context, index) {
-                                var reward = rewards[index];
+                                var reward = rewards[index].data() as Map<String, dynamic>;
                                 return _buildRewardCard(
                                   context,
                                   reward['title'] ?? 'No Title',
                                   reward['description'] ?? '',
-                                  reward['cost'].toString(),
+                                  reward['cost']?.toString() ?? '0',
                                 );
                               },
                             );
@@ -122,7 +123,7 @@ class ChildShopDashboardScreen extends ConsumerWidget {
                 ),
               ),
 
-              // Bottom Navigation Area
+              // --- Bottom Navigation Area ---
               Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Row(
@@ -167,7 +168,7 @@ class ChildShopDashboardScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.midnightPlum.withOpacity(0.2),
+            color: AppTheme.midnightPlum.withValues(alpha: 0.2),
             blurRadius: 6,
             offset: const Offset(0, 4),
           ),
@@ -186,7 +187,7 @@ class ChildShopDashboardScreen extends ConsumerWidget {
                 width: 70,
                 height: 70,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.5),
+                  color: Colors.white.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.videogame_asset, size: 40, color: AppTheme.midnightPlum),
@@ -211,7 +212,7 @@ class ChildShopDashboardScreen extends ConsumerWidget {
               const SizedBox(width: 10),
               GestureDetector(
                 onTap: () {
-                  // Logic for redemption request goes here
+                  // Redemption logic
                 },
                 child: Container(
                   padding: const EdgeInsets.all(8),
