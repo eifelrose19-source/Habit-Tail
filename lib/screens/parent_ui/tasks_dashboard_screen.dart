@@ -22,6 +22,28 @@ class _TasksDashboardScreenState extends State<TasksDashboardScreen> {
   String _selectedFrequency = 'Daily';
   String _sortBy = 'title'; 
 
+  String? _familyId;
+  String? _displayName;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final user = _authService.currentUser;
+    if (user != null) {
+      final tokenResult = await user.getIdTokenResult();
+      if (mounted) {
+        setState(() {
+          _displayName = user.displayName;
+          _familyId = tokenResult.claims?['family_id'] as String?;
+        });
+      }
+    }
+  }
+
   @override
   void dispose() {
     _taskTitleController.dispose();
@@ -31,25 +53,22 @@ class _TasksDashboardScreenState extends State<TasksDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final userMetadata = _authService.currentUserMetadata;
-    final familyId = userMetadata?['family_id'];
-
     return Scaffold(
       backgroundColor: AppTheme.beigeBackground,
       body: Column(
         children: [
-          _buildHeader(userMetadata?['display_name'] ?? 'Parent'),
+          _buildHeader(_displayName ?? 'Parent'),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
                   const SizedBox(height: 20),
-                  _buildCreateTaskSection(familyId),
+                  _buildCreateTaskSection(_familyId),
                   const SizedBox(height: 15),
                   _buildSortButton(),
                   const SizedBox(height: 10),
-                  _buildTasksStream(familyId),
+                  _buildTasksStream(_familyId),
                   const SizedBox(height: 40),
                 ],
               ),
@@ -62,7 +81,7 @@ class _TasksDashboardScreenState extends State<TasksDashboardScreen> {
   }
 
   Widget _buildTasksStream(String? familyId) {
-    if (familyId == null) return const SizedBox.shrink();
+    if (familyId == null) return const Center(child: CircularProgressIndicator());
 
     return StreamBuilder<QuerySnapshot>(
       stream: _firestore
@@ -178,6 +197,8 @@ class _TasksDashboardScreenState extends State<TasksDashboardScreen> {
     required ValueChanged<String?> onChanged,
     bool isChildFilter = false,
   }) {
+    if (familyId == null) return const SizedBox.shrink();
+
     Query query = _firestore.collection(collection).where('family_id', isEqualTo: familyId);
     if (isChildFilter) query = query.where('role', isEqualTo: 'child');
 
@@ -232,11 +253,13 @@ class _TasksDashboardScreenState extends State<TasksDashboardScreen> {
 
     _taskTitleController.clear();
     _rewardController.clear();
-    setState(() {
-      _selectedPetId = null;
-      _selectedChildId = null;
-      _selectedFrequency = 'Daily';
-    });
+    if (mounted) {
+      setState(() {
+        _selectedPetId = null;
+        _selectedChildId = null;
+        _selectedFrequency = 'Daily';
+      });
+    }
   }
 
   Widget _buildTaskCard(Map<String, dynamic> task) {
@@ -351,7 +374,8 @@ class _TasksDashboardScreenState extends State<TasksDashboardScreen> {
                     'gold': int.tryParse(rewardEditController.text) ?? 0,
                     'frequency': freq,
                   });
-                  if (!mounted) return;
+                  // Fix: Check context.mounted for the specific context being used
+                  if (!modalContext.mounted) return;
                   Navigator.pop(modalContext);
                 },
               ),
@@ -361,7 +385,8 @@ class _TasksDashboardScreenState extends State<TasksDashboardScreen> {
                 label: 'Delete Task',
                 onTap: () async {
                   await _firestore.collection('tasks').doc(task['id']).delete();
-                  if (!mounted) return;
+                  // Fix: Check context.mounted for the specific context being used
+                  if (!modalContext.mounted) return;
                   Navigator.pop(modalContext);
                 },
               ),
