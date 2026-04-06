@@ -80,7 +80,6 @@ class UserService {
     required UserModel member,
     required String parentUid,
   }) async {
-    // TODO: Add claimed field in Firestore
     final doc = await _db.collection('users').doc(member.userId).get();
     final claimed = doc.data()?['claimed'] ?? false;
 
