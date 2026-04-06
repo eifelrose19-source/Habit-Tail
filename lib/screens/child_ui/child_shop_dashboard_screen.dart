@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/user_provider.dart'; 
-import '../child_ui/child_settings_screen.dart';
+import 'child_settings_screen.dart';
 import 'child_dashboard_screen.dart';
 
 class ChildShopDashboardScreen extends ConsumerWidget {
