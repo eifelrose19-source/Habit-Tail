@@ -25,14 +25,14 @@ class _PetsDashboardScreenState extends ConsumerState<PetsDashboardScreen> {
   String? _familyId;
 
   late TextEditingController _petNameController;
-  late TextEditingController _typeController; 
+  late TextEditingController _typeController;
   late TextEditingController _breedController;
   late TextEditingController _genderController;
   late TextEditingController _ageController;
-  late TextEditingController _petLicenseController; 
-  late TextEditingController _veterinarianController; 
-  late TextEditingController _vetOfficeController; 
-  late TextEditingController _vetNumberController; 
+  late TextEditingController _petLicenseController;
+  late TextEditingController _veterinarianController;
+  late TextEditingController _vetOfficeController;
+  late TextEditingController _vetNumberController;
   late TextEditingController _petMedsController;
 
   @override
@@ -68,7 +68,7 @@ class _PetsDashboardScreenState extends ConsumerState<PetsDashboardScreen> {
 
   void _updateControllers(PetModel pet) {
     if (_isEditingPet) return;
-    
+
     _petNameController.text = pet.name;
     _typeController.text = pet.type;
     _breedController.text = pet.breed;
@@ -120,7 +120,7 @@ class _PetsDashboardScreenState extends ConsumerState<PetsDashboardScreen> {
           }
 
           final pets = petDocs.map((doc) => PetModel.fromFirestore(doc)).toList();
-          
+
           if (_selectedPetIndex >= pets.length) _selectedPetIndex = 0;
           final selectedPet = pets[_selectedPetIndex];
 
@@ -165,7 +165,7 @@ class _PetsDashboardScreenState extends ConsumerState<PetsDashboardScreen> {
         _buildHeader(),
         Expanded(
           child: Center(
-            child: Text('No pets registered yet.', 
+            child: Text('No pets registered yet.',
                 style: AppTheme.bodyText(fontSize: 16)),
           ),
         ),
@@ -268,15 +268,15 @@ class _PetsDashboardScreenState extends ConsumerState<PetsDashboardScreen> {
       stream: _taskService.getTaskStream(_familyId!),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const SizedBox();
-        
+
         final petTasks = snapshot.data!.docs
-            .where((doc) => doc.data()['pet_name'] == petName) 
+            .where((doc) => doc.data()['pet_name'] == petName)
             .toList();
 
         if (petTasks.isEmpty) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 20),
-            child: Text("No upcoming tasks for $petName", 
+            child: Text("No upcoming tasks for $petName",
                 style: AppTheme.bodyText(fontSize: 12).copyWith(color: Colors.grey)),
           );
         }
@@ -500,21 +500,21 @@ class _PetsDashboardScreenState extends ConsumerState<PetsDashboardScreen> {
           TextButton(
             onPressed: () async {
               await FirebaseFirestore.instance.collection('pets').doc(pet.petId).delete();
-              
+
               final tasks = await FirebaseFirestore.instance
                   .collection('tasks')
                   .where('pet_name', isEqualTo: pet.name)
                   .get();
-              
+
               final batch = FirebaseFirestore.instance.batch();
               for (var doc in tasks.docs) {
                 batch.delete(doc.reference);
               }
               await batch.commit();
 
-              if (!mounted) return;
+              if (!context.mounted) return;
 
-              Navigator.of(context).pop(); 
+              Navigator.of(context).pop();
               setState(() {
                 _selectedPetIndex = 0;
                 _isEditingPet = false;
