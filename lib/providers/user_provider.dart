@@ -2,7 +2,11 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user_model.dart';
+import '../repositories/user_repository.dart';
 
+final userRepositoryProvider = Provider<UserRepository>(
+  (ref) => UserRepository(),
+);
 class UserState {
   final UserModel? user;
   final bool isLoading;
@@ -30,11 +34,12 @@ class UserState {
 }
 
 class UserNotifier extends Notifier<UserState> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _userSubscription;
+  late final UserRepository _repository;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? userSubscription;
 
   @override
   UserState build() {
+    _repository = ref.read(userRepositoryProvider);
     ref.onDispose(() => _userSubscription?.cancel());
     return const UserState();
   }
@@ -44,7 +49,7 @@ class UserNotifier extends Notifier<UserState> {
     state = state.copyWith(isLoading: true, error: null);
     _userSubscription?.cancel();
 
-    _userSubscription = _firestore
+    _userSubscription = Firebase.Firestore.instance
         .collection('users')
         .doc(userId)
         .snapshots()
@@ -68,9 +73,7 @@ class UserNotifier extends Notifier<UserState> {
   /// Updates user points (e.g., when a task is approved)
   Future<void> addPoints(String userId, int points) async {
     try {
-      await _firestore.collection('users').doc(userId).update({
-        'total_points': FieldValue.increment(points),
-      });
+      await _repository.addPoints(userId, points);
     } catch (e) {
       state = state.copyWith(error: e.toString());
       rethrow;
@@ -80,9 +83,7 @@ class UserNotifier extends Notifier<UserState> {
   /// Deducts user points (e.g., when a reward is claimed)
   Future<void> subtractPoints(String userId, int points) async {
     try {
-      await _firestore.collection('users').doc(userId).update({
-        'total_points': FieldValue.increment(-points),
-      });
+      await _repository.addPoints(userId, -points);
     } catch (e) {
       state = state.copyWith(error: e.toString());
       rethrow;
