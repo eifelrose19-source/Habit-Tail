@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../models/task_model.dart';
 
 class TaskService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -11,7 +12,6 @@ class TaskService {
 
   // ─── Helpers ────────────────────────────────────────────────
 
-  /// Pointing to the root 'tasks' collection
   DocumentReference _taskRef(String taskId) {
     return _db.collection('tasks').doc(taskId);
   }
@@ -24,7 +24,6 @@ class TaskService {
     return snapshot;
   }
 
-  /// Helper to get current user data for role validation
   Future<Map<String, dynamic>?> _getCurrentUserData() async {
     final String? userId = _auth.currentUser?.uid;
     if (userId == null) return null;
@@ -35,108 +34,35 @@ class TaskService {
 
   // ─── Streams ─────────────────────────────────────────────────
 
-  /// Streams tasks filtered by the family_id field
-  Stream<QuerySnapshot<Map<String, dynamic>>> getTaskStream(String familyId) {
+  Stream<List<TaskModel>> watchFamilyTasks(String familyId) { 
     return _db
         .collection('tasks')
         .where('family_id', isEqualTo: familyId)
-        .snapshots();
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => TaskModel.fromFirestore(doc))
+            .toList()); // logic moved from repository/notifier to service
   }
 
-  // ─── Parent: Create Task ──────────────────────────────────────
+  // ─── Business Logic ──────────────────────────────────────────
 
-  Future<void> createTask({
-    required String familyId,
-    required String assignedTo,
-    required String name,
-    required int points,
-  }) async {
+  Future<void> createTask(TaskModel task) async { // Refactored to accept model
     final String? userId = _auth.currentUser?.uid;
     if (userId == null) throw Exception('No signed-in user.');
 
-    final userData = await _getCurrentUserData();
-    if (userData?['is_parent'] != true) {
-      throw Exception('Only a Parent can create tasks.');
-    }
+    final int clampedPoints = task.points.clamp(_minPointsPerTask, _maxPointsPerTask);
 
-    final int clampedPoints = points.clamp(_minPointsPerTask, _maxPointsPerTask);
-
-    await _db.collection('tasks').add({
-      'name': name,
-      'points': clampedPoints,
-      'assigned_to': assignedTo,
-      'family_id': familyId,
-      'created_by': userId,
-      'status': 'pending',
-      'created_at': FieldValue.serverTimestamp(),
-    });
+    await _db.collection('tasks').add(task.copyWith(
+      createdBy: userId,
+      points: clampedPoints,
+    ).toFirestore()); // logic moved from UI to service
   }
 
-  // ─── Child: Submit Task ───────────────────────────────────────
-
-  Future<void> submitTaskCompletion(String taskId) async {
-    final String? userId = _auth.currentUser?.uid;
-    if (userId == null) throw Exception('No signed-in user.');
-
-    final taskSnapshot = await _getVerifiedTask(taskId);
-    final data = taskSnapshot.data() as Map<String, dynamic>?;
-
-    if (data?['assigned_to'] != userId) {
-      throw Exception('You are not assigned to this task.');
-    }
-
-    if (data?['status'] != 'pending') {
-      throw Exception('Task cannot be submitted. Current status: ${data?['status']}');
-    }
-
-    await _taskRef(taskId).update({
-      'status': 'pending_approval',
-      'submitted_at': FieldValue.serverTimestamp(),
-    });
+  Future<void> updateTask(TaskModel task) async { // Added model-based update
+    await _taskRef(task.taskId).update(task.toFirestore()); 
   }
 
-  // ─── Parent: Approve Task ─────────────────────────────────────
-
-  Future<void> approveTask(String taskId) async {
-    final String? userId = _auth.currentUser?.uid;
-    if (userId == null) throw Exception('No signed-in user.');
-
-    final userData = await _getCurrentUserData();
-    if (userData?['is_parent'] != true) {
-      throw Exception('Only a Parent can approve tasks.');
-    }
-
-    await _db.runTransaction((transaction) async {
-      final taskRef = _taskRef(taskId);
-      final taskSnapshot = await transaction.get(taskRef);
-
-      final data = taskSnapshot.data() as Map<String, dynamic>?;
-      if (data?['status'] != 'pending_approval') {
-        throw Exception('Task is not awaiting approval.');
-      }
-
-      final String? assignedTo = data?['assigned_to'] as String?;
-      final int points = data?['points'] as int? ?? 0;
-
-      final userRef = _db.collection('users').doc(assignedTo);
-
-      // Atomic Update: Mark task complete AND reward points
-      transaction.update(taskRef, {
-        'status': 'completed',
-        'approved_by': userId,
-        'approved_at': FieldValue.serverTimestamp(),
-      });
-
-      transaction.update(userRef, {
-        'total_points': FieldValue.increment(points),
-      });
-    });
-  }
-
-  // ─── Generic Update ──────────────────────────────────────────
-
-  Future<void> updateTask(String taskId, Map<String, dynamic> data) async {
-    await _getVerifiedTask(taskId);
-    await _taskRef(taskId).update(data);
+  Future<void> deleteTask(String taskId) async {
+    await _taskRef(taskId).delete(); 
   }
 }
