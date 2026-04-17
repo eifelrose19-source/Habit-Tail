@@ -99,7 +99,7 @@ class UserRepository {
 
 /// Claims a slot for a joining user
 /// Sets the uid and flips claimed: true atomically
-Future<void> claimedSlot(String slotDocId, String uid) async {
+Future<void> claimSlot(String slotDocId, String uid) async {
   await _firestore.collection('users').doc(slotDocId).update({
     'uid': uid,
     'claimed': true,
