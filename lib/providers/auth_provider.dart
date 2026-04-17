@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'user_provider.dart';
 class AuthState {
   final User? user;
   final bool isLoading;
@@ -37,11 +37,18 @@ class AuthNotifier extends Notifier<AuthState> {
     // Listen to auth changes and update state
     _authStateSubscription = _auth.authStateChanges().listen((user) {
       state = state.copyWith(user: user, isLoading: false, error: null);
+
+      if (user != null) {
+      //Logged in or app reopened streams their Firestore doc
+      ref.read(userProvider.notifier). startListening(user.uid);
+    } else {
+      //Signed out - clears Firestore state so router reacts immediately
+      ref.read(userProvider.notifier).stopListening();
+    }
     });
 
     // Clean up the subscription when the provider is disposed
     ref.onDispose(() => _authStateSubscription?.cancel());
-
     return const AuthState();
   }
 
