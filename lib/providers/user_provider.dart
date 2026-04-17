@@ -21,14 +21,17 @@ class UserState {
 
   bool get isParent => user?.isParent ?? false;
   bool get isLoggedIn => user != null;
+  bool get needsFamilySetup => user != null && user!.familyId.isEmpty;
+  bool get isClaimed => user?.claimed ?? false;
 
   UserState copyWith({
     UserModel? user,
     bool? isLoading,
     String? error,
+    bool clearUser = false,
   }) =>
       UserState(
-        user: user ?? this.user,
+        user: clearUser ? null : (user ?? this.user),
         isLoading: isLoading ?? this.isLoading,
         error: error,
       );
@@ -36,7 +39,6 @@ class UserState {
 
 class UserNotifier extends Notifier<UserState> {
   late final UserRepository _repository;
-
   StreamSubscription<UserModel?>? _userSubscription;
 
   @override
