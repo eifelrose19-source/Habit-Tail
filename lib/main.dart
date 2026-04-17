@@ -8,7 +8,7 @@ import 'theme/app_theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/user_provider.dart';
 
-// --- Screen Imports (uncomment as you build each screen) ---
+// --- Screen Imports---
 // import 'screens/auth/splash_screen.dart';
 // import 'screens/auth/login_screen.dart';
 // import 'screens/auth/signup_screen.dart';
@@ -46,7 +46,6 @@ class HabitTailApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        // Seed color only — specific colors come from AppTheme directly
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppTheme.softIris,
           primary: AppTheme.softIris,
@@ -55,9 +54,7 @@ class HabitTailApp extends StatelessWidget {
           onSecondary: AppTheme.midnightPlum,
           onSurface: AppTheme.midnightPlum,
         ),
-        // Google Fonts handles the font — no fontFamily string needed
         textTheme: GoogleFonts.quicksandTextTheme(),
-        // Button and input styles come from AppTheme
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: AppTheme.elevatedButtonStyle,
         ),
@@ -77,7 +74,6 @@ class HabitTailApp extends StatelessWidget {
 }
 
 /// Watches auth and user state and routes accordingly.
-/// Uncomment each screen as it gets built.
 class _RootRouter extends ConsumerWidget {
   const _RootRouter();
 
