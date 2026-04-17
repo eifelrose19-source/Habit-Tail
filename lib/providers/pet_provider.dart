@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/pet_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+final petServiceProvider = Provider((ref) => PetService());
 class PetNotifier extends Notifier<List<PetModel>> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  StreamSubscription<QuerySnapshot>? _subscription;
+  StreamSubscription? _subscription;
 
   @override
   List<PetModel> build() {
@@ -18,15 +18,8 @@ class PetNotifier extends Notifier<List<PetModel>> {
   void watchFamilyPets(String familyId) {
     // Cancel any existing subscription before starting a new one
     _subscription?.cancel();
-
-    _subscription = _firestore
-        .collection('pets')
-        .where('family_id', isEqualTo: familyId) 
-        .snapshots()
-        .listen((snapshot) {
-      state = snapshot.docs
-          .map((doc) => PetModel.fromFirestore(doc))
-          .toList();
+    _subscription = ref.read(petServiceProvider).getPetStream(familyId).listen((snapshot) {
+      state = snapshot.docs.map((doc) => PetModel.fromFirestore(doc)).toList();
     });
   }
 }
