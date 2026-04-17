@@ -1,11 +1,12 @@
 import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/task_model.dart';
+import '../services/task_service.dart';
+
+final taskServiceProvider = Provider((ref) => TaskService()); 
 
 class TaskNotifier extends Notifier<List<TaskModel>> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  StreamSubscription<QuerySnapshot>? _subscription;
+  StreamSubscription<List<TaskModel>>? _subscription; // Changed to List<TaskModel>
 
   @override
   List<TaskModel> build() {
@@ -13,30 +14,24 @@ class TaskNotifier extends Notifier<List<TaskModel>> {
     return [];
   }
 
-  /// Listens to all tasks for a specific family
   void watchFamilyTasks(String familyId) {
     _subscription?.cancel();
-
-    _subscription = _firestore
-        .collection('tasks')
-        .where('family_id', isEqualTo: familyId)
-        .snapshots()
-        .listen((snapshot) {
-      state = snapshot.docs
-          .map((doc) => TaskModel.fromFirestore(doc))
-          .toList();
+    // Listening through service instead of direct Firestore call 
+    _subscription = ref.read(taskServiceProvider).watchFamilyTasks(familyId).listen((tasks) {
+      state = tasks;
     });
   }
 
-  /// Updates a task's status (e.g., 'todo' to 'completed')
-  Future<void> updateTaskStatus(String taskId, String newStatus) async {
-    await _firestore
-        .collection('tasks')
-        .doc(taskId)
-        .update({
-          'status': newStatus,
-          'last_completed': FieldValue.serverTimestamp(),
-        });
+  Future<void> addTask(TaskModel task) async { 
+    await ref.read(taskServiceProvider).createTask(task); 
+  }
+
+  Future<void> editTask(TaskModel task) async { 
+    await ref.read(taskServiceProvider).updateTask(task); 
+  }
+
+  Future<void> removeTask(String taskId) async { 
+    await ref.read(taskServiceProvider).deleteTask(taskId); 
   }
 }
 
