@@ -2,16 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'firebase_options.dart';
-
-// --- Theme ---
 import 'theme/app_theme.dart';
+import 'providers/auth_provider.dart';
+import 'providers/user_provider.dart';
 
-// --- Screen Imports ---
-//import 'screens/auth/splash_screen.dart';
-//import 'screens/auth/login_screen.dart';
-//import 'screens/auth/signup_screen.dart';
-//import 'screens/auth/create_or_join_family_screen.dart';
+// --- Screen Imports (uncomment as you build each screen) ---
+// import 'screens/auth/splash_screen.dart';
+// import 'screens/auth/login_screen.dart';
+// import 'screens/auth/signup_screen.dart';
+// import 'screens/onboarding/create_or_join_screen.dart';
+// import 'screens/onboarding/who_are_you_screen.dart';
+// import 'screens/parent/parent_dashboard.dart';
+// import 'screens/child/child_dashboard.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,7 +24,6 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Enable Firestore offline persistence
   FirebaseFirestore.instance.settings = const Settings(
     persistenceEnabled: true,
     cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
@@ -43,75 +46,97 @@ class HabitTailApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
+        // Seed color only — specific colors come from AppTheme directly
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppTheme.softIris,
           primary: AppTheme.softIris,
           secondary: AppTheme.electricSky,
-          surface: Colors.white,
           onPrimary: AppTheme.midnightPlum,
           onSecondary: AppTheme.midnightPlum,
           onSurface: AppTheme.midnightPlum,
         ),
-        fontFamily: 'Quicksand',
-        textTheme: const TextTheme(
-          displayLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.bold,    color: AppTheme.midnightPlum),
-          headlineMedium: TextStyle(fontSize: 24, fontWeight: FontWeight.w600,  color: AppTheme.midnightPlum),
-          bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w500,       color: AppTheme.midnightPlum),
-          labelLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,      color: AppTheme.midnightPlum),
-          bodySmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w500,       color: AppTheme.midnightPlum),
-        ),
+        // Google Fonts handles the font — no fontFamily string needed
+        textTheme: GoogleFonts.quicksandTextTheme(),
+        // Button and input styles come from AppTheme
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: AppTheme.elevatedButtonStyle,
         ),
-        inputDecorationTheme: InputDecorationTheme(
+        inputDecorationTheme: const InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.all(Radius.circular(12)),
             borderSide: BorderSide.none,
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
       ),
+      home: const _RootRouter(),
     );
   }
 }
 
-class MainNavigationScreen extends StatefulWidget {
-  const MainNavigationScreen({super.key});
+/// Watches auth and user state and routes accordingly.
+/// Uncomment each screen as it gets built.
+class _RootRouter extends ConsumerWidget {
+  const _RootRouter();
 
   @override
-  State<MainNavigationScreen> createState() => _MainNavigationScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final auth = ref.watch(authProvider);
+    final user = ref.watch(userProvider);
 
-class _MainNavigationScreenState extends State<MainNavigationScreen> {
-  int _selectedIndex = 0;
+    // Auth still initialising on cold start
+    if (auth.isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+      // Replace with: return const SplashScreen();
+    }
 
-  final List<Widget> _pages = [
-    const Center(child: Text('Home Dashboard Coming Soon')),
-    const Center(child: Text('Tasks Screen')),
-    const Center(child: Text('Rewards Screen')),
-    const Center(child: Text('Pets Screen')),
-  ];
+    // Not logged in
+    if (!auth.isAuthenticated) {
+      return const Scaffold(
+        body: Center(child: Text('Login Screen Coming Soon')),
+      );
+      // Replace with: return const LoginScreen();
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _pages,
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) => setState(() => _selectedIndex = index),
-        indicatorColor: AppTheme.softIris.withValues(alpha: 0.3),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_rounded),         label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.task_alt_rounded),     label: 'Tasks'),
-          NavigationDestination(icon: Icon(Icons.card_giftcard_rounded),label: 'Rewards'),
-          NavigationDestination(icon: Icon(Icons.pets_rounded),         label: 'Pets'),
-        ],
-      ),
+    // Logged in but Firestore doc still loading
+    if (user.isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+      // Replace with: return const SplashScreen();
+    }
+
+    // Logged in but no family set up yet
+    if (user.needsFamilySetup) {
+      return const Scaffold(
+        body: Center(child: Text('Create or Join Screen Coming Soon')),
+      );
+      // Replace with: return const CreateOrJoinScreen();
+    }
+
+    // Has family but hasn't claimed a slot yet
+    if (!user.isClaimed) {
+      return const Scaffold(
+        body: Center(child: Text('Who Are You Screen Coming Soon')),
+      );
+      // Replace with: return const WhoAreYouScreen();
+    }
+
+    // Fully onboarded — route by role
+    if (user.isParent) {
+      return const Scaffold(
+        body: Center(child: Text('Parent Dashboard Coming Soon')),
+      );
+      // Replace with: return const ParentDashboard();
+    }
+
+    return const Scaffold(
+      body: Center(child: Text('Child Dashboard Coming Soon')),
     );
+    // Replace with: return const ChildDashboard();
   }
 }
