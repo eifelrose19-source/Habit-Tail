@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_tail/theme/app_theme.dart';
-import 'package:habit_tail/services/pet_service.dart';
-import 'package:habit_tail/services/task_service.dart';
 import 'package:habit_tail/services/auth_service.dart';
 import 'package:habit_tail/models/pet_model.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:habit_tail/models/task_model.dart'; 
+import 'package:habit_tail/providers/pet_provider.dart'; 
+import 'package:habit_tail/providers/task_provider.dart'; 
 import 'package:habit_tail/screens/parent_ui/tasks_dashboard_screen.dart';
 
 class PetsDashboardScreen extends ConsumerStatefulWidget {
@@ -16,8 +16,6 @@ class PetsDashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _PetsDashboardScreenState extends ConsumerState<PetsDashboardScreen> {
-  final PetService _petService = PetService();
-  final TaskService _taskService = TaskService();
   final AuthService _authService = AuthService();
 
   int _selectedPetIndex = 0;
@@ -59,10 +57,16 @@ class _PetsDashboardScreenState extends ConsumerState<PetsDashboardScreen> {
     final user = _authService.currentUser;
     if (user != null) {
       final token = await user.getIdTokenResult();
+      final id = token.claims?['family_id'] as String?; 
       if (!mounted) return;
       setState(() {
-        _familyId = token.claims?['family_id'] as String?;
+        _familyId = id; 
       });
+
+      if (id != null) { 
+        ref.read(petProvider.notifier).watchFamilyPets(id); 
+        ref.read(taskProvider.notifier).watchFamilyTasks(id); 
+      }
     }
   }
 
@@ -105,56 +109,46 @@ class _PetsDashboardScreenState extends ConsumerState<PetsDashboardScreen> {
       );
     }
 
+    final pets = ref.watch(petProvider);
+
+    if (pets.isEmpty) { 
+      return _buildEmptyState();
+    }
+
+    if (_selectedPetIndex >= pets.length) _selectedPetIndex = 0;
+    final selectedPet = pets[_selectedPetIndex];
+
+    _updateControllers(selectedPet);
+
     return Scaffold(
       backgroundColor: AppTheme.beigeBackground,
-      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: _petService.getPetStream(_familyId!),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final petDocs = snapshot.data?.docs ?? [];
-          if (petDocs.isEmpty) {
-            return _buildEmptyState();
-          }
-
-          final pets = petDocs.map((doc) => PetModel.fromFirestore(doc)).toList();
-
-          if (_selectedPetIndex >= pets.length) _selectedPetIndex = 0;
-          final selectedPet = pets[_selectedPetIndex];
-
-          _updateControllers(selectedPet);
-
-          return Column(
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 20),
-                      Text('Pets Dashboard',
-                          style: AppTheme.bodyText(fontSize: 18, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 15),
-                      _buildPetSelector(pets),
-                      const SizedBox(height: 20),
-                      Text('${selectedPet.name}\'s Dashboard',
-                          style: AppTheme.bodyText(fontSize: 16, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 10),
-                      _buildTasksList(selectedPet.name),
-                      const SizedBox(height: 20),
-                      _buildPetInfoSection(selectedPet),
-                      const SizedBox(height: 40),
-                    ],
-                  ),
-                ),
+      body: Column( 
+        children: [
+          _buildHeader(),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                children: [
+                  const SizedBox(height: 20),
+                  Text('Pets Dashboard',
+                      style: AppTheme.bodyText(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 15),
+                  _buildPetSelector(pets),
+                  const SizedBox(height: 20),
+                  Text('${selectedPet.name}\'s Dashboard',
+                      style: AppTheme.bodyText(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
+                  _buildTasksList(selectedPet.name),
+                  const SizedBox(height: 20),
+                  _buildPetInfoSection(selectedPet),
+                  const SizedBox(height: 40),
+                ],
               ),
-              _buildBottomBar(),
-            ],
-          );
-        },
+            ),
+          ),
+          _buildBottomBar(),
+        ],
       ),
     );
   }
@@ -264,32 +258,23 @@ class _PetsDashboardScreenState extends ConsumerState<PetsDashboardScreen> {
   }
 
   Widget _buildTasksList(String petName) {
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: _taskService.getTaskStream(_familyId!),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const SizedBox();
+    final allTasks = ref.watch(taskProvider);
+    final petTasks = allTasks.where((task) => task.title.contains(petName)).toList();
 
-        final petTasks = snapshot.data!.docs
-            .where((doc) => doc.data()['pet_name'] == petName)
-            .toList();
+    if (petTasks.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Text("No upcoming tasks for $petName",
+            style: AppTheme.bodyText(fontSize: 12).copyWith(color: Colors.grey)),
+      );
+    }
 
-        if (petTasks.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20),
-            child: Text("No upcoming tasks for $petName",
-                style: AppTheme.bodyText(fontSize: 12).copyWith(color: Colors.grey)),
-          );
-        }
-
-        return Column(
-          children: petTasks.map((doc) => _buildTaskCard(doc.id, doc.data())).toList(),
-        );
-      },
+    return Column(
+      children: petTasks.map((task) => _buildTaskCard(task, petName)).toList(),
     );
   }
-
-  Widget _buildTaskCard(String taskId, Map<String, dynamic> task) {
-    final bool isCompleted = task['status'] == 'completed';
+  Widget _buildTaskCard(TaskModel task, String petName) {
+    final bool isCompleted = task.status == 'completed'; 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -303,9 +288,9 @@ class _PetsDashboardScreenState extends ConsumerState<PetsDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Task: ${task['name']}',
+                Text('Task: ${task.title}', 
                     style: AppTheme.bodyText(fontSize: 11, fontWeight: FontWeight.bold)),
-                Text('Pet: ${task['pet_name'] ?? 'N/A'}', style: AppTheme.bodyText(fontSize: 10)),
+                Text('Pet: $petName', style: AppTheme.bodyText(fontSize: 10)), 
               ],
             ),
           ),
@@ -314,7 +299,7 @@ class _PetsDashboardScreenState extends ConsumerState<PetsDashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Assigned to:', style: AppTheme.bodyText(fontSize: 10)),
-                Text(task['assigned_to'] ?? 'Everyone',
+                Text(task.assignedTo.isEmpty ? 'Everyone' : task.assignedTo, 
                     style: AppTheme.bodyText(fontSize: 11, fontWeight: FontWeight.bold)),
               ],
             ),
@@ -325,7 +310,7 @@ class _PetsDashboardScreenState extends ConsumerState<PetsDashboardScreen> {
               children: [
                 Text('Status:', style: AppTheme.bodyText(fontSize: 10)),
                 Text(
-                  task['status']?.toUpperCase() ?? 'PENDING',
+                  task.status.toUpperCase(), 
                   style: AppTheme.bodyText(fontSize: 11, fontWeight: FontWeight.bold).copyWith(
                     color: isCompleted ? Colors.green : Colors.orange,
                   ),
@@ -407,7 +392,7 @@ class _PetsDashboardScreenState extends ConsumerState<PetsDashboardScreen> {
               context: context,
               label: 'Save Changes',
               onTap: () async {
-                await _petService.updatePetRaw(pet.petId, {
+                await ref.read(petServiceProvider).updatePetRaw(pet.petId, {
                   'name': _petNameController.text,
                   'type': _typeController.text,
                   'breed': _breedController.text,
@@ -499,18 +484,7 @@ class _PetsDashboardScreenState extends ConsumerState<PetsDashboardScreen> {
           ),
           TextButton(
             onPressed: () async {
-              await FirebaseFirestore.instance.collection('pets').doc(pet.petId).delete();
-
-              final tasks = await FirebaseFirestore.instance
-                  .collection('tasks')
-                  .where('pet_name', isEqualTo: pet.name)
-                  .get();
-
-              final batch = FirebaseFirestore.instance.batch();
-              for (var doc in tasks.docs) {
-                batch.delete(doc.reference);
-              }
-              await batch.commit();
+              await ref.read(petServiceProvider).deletePetAndTasks(pet.petId, pet.name);
 
               if (!context.mounted) return;
 
