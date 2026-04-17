@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_tail/models/user_model.dart';
+import 'package:habit_tail/providers/family_provider.dart';
 import 'package:habit_tail/providers/user_provider.dart';
 import 'package:habit_tail/services/user_service.dart';
 import 'package:habit_tail/theme/app_theme.dart';
@@ -286,7 +287,6 @@ class _FamilyDashboardScreenState
 
   void _showManageFamilyModal(
       BuildContext context, List<UserModel> members) {
-    // Read once — modal doesn't need to reactively rebuild
     final parent = ref.read(userProvider).user;
     final String parentUid = parent?.userId ?? '';
     final String familyId = parent?.familyId ?? '';
@@ -566,10 +566,11 @@ class _FamilyDashboardScreenState
 
   @override
   Widget build(BuildContext context) {
-    // ref.watch keeps the header and member list reactive to Firestore changes
     final userState = ref.watch(userProvider);
     final parent = userState.user;
     final familyId = parent?.familyId ?? '';
+
+    final familyAsync = ref.watch(familyMembersProvider);
 
     if (userState.isLoading) {
       return const Scaffold(
@@ -579,39 +580,43 @@ class _FamilyDashboardScreenState
 
     return Scaffold(
       backgroundColor: AppTheme.beigeBackground,
-      body: StreamBuilder<List<UserModel>>(
-        stream: familyId.isNotEmpty
-            ? _userService.getFamilyMembers(familyId)
-            : const Stream.empty(),
-        builder: (context, snapshot) {
-          final members = snapshot.data ?? [];
-
-          return Column(
-            children: [
-              _buildHeader(parent?.displayName ?? '…'),
-              Expanded(
-                child: snapshot.connectionState ==
-                            ConnectionState.waiting &&
-                        members.isEmpty
-                    ? const Center(child: CircularProgressIndicator())
-                    : SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
-                          children: [
-                            _buildFamilyMembersSection(
-                                members, familyId),
-                            _buildActivityFeedSection(),
-                            const SizedBox(height: 100),
-                          ],
-                        ),
-                      ),
+      body: familyAsync.when(
+        loading: () => Column(
+          children: [
+            _buildHeader(parent?.displayName ?? '…'),
+            const Expanded(
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          ],
+        ),
+        error: (err, _) => Column(
+          children: [
+            _buildHeader(parent?.displayName ?? '…'),
+            Expanded(
+              child: Center(child: Text(err.toString())),
+            ),
+          ],
+        ),
+        data: (members) => Column(
+          children: [
+            _buildHeader(parent?.displayName ?? '…'),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildFamilyMembersSection(members, familyId),
+                    _buildActivityFeedSection(),
+                    const SizedBox(height: 100),
+                  ],
+                ),
               ),
-              _buildBottomBar(context, members),
-            ],
-          );
-        },
+            ),
+            _buildBottomBar(context, members),
+          ],
+        ),
       ),
     );
   }
 }
+
