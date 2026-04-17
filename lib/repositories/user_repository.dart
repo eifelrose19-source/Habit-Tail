@@ -13,7 +13,7 @@ class UserRepository {
         .map((snapshot) {
       if (!snapshot.exists) return null;
       return UserModel.fromFirestore(
-        snapshot as DocumentSnapshot<Map<String, dynamic>>);
+        snapshot);
     });
   }
 
@@ -32,7 +32,7 @@ class UserRepository {
   Future<UserModel?> getUser(String userId) async {
     final doc = await _firestore.collection('users').doc(userId).get();
     if (!doc.exists) return null;
-    return UserModel.fromFirestore(doc as DocumentSnapshot<Map<String, dynamic>>);
+    return UserModel.fromFirestore(doc);
   }
 
   /// Creates or updates a user document
