@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/pet_model.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/pet_service.dart';
 
 final petServiceProvider = Provider((ref) => PetService());
 class PetNotifier extends Notifier<List<PetModel>> {
