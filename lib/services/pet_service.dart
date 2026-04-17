@@ -11,14 +11,23 @@ class PetService {
         .snapshots();
   }
 
-  /// Updates a specific pet document using its unique ID in the top-level collection.
-  Future<void> updatePetRaw(
-    String petId,
-    Map<String, dynamic> data,
-  ) {
-    return _db
-        .collection('pets')
-        .doc(petId)
-        .update(data);
+  /// Updates a specific pet document 
+  Future<void> updatePetRaw(String petId, Map<String, dynamic> data) {
+    return _db.collection('pets').doc(petId).update(data);
+  }
+  Future<void> deletePetAndTasks(String petId, String petName) async {
+    final batch = _db.batch();
+
+    batch.delete(_db.collection('pets').doc(petId));
+
+    final taskDocs = await _db
+      .collection('tasks')
+      .where('pet_name', isEqualTo: petName)
+      .get();
+
+    for (var doc in taskDocs.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
   }
 }
