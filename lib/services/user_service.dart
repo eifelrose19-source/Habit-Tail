@@ -9,9 +9,8 @@ class UserService {
     final doc = await _db.collection('users').doc(userId).get();
     return doc.data();
   }
-
-  // Generic update method used by renameFamilyMember.
-  Future<void> updateUserProfile(String userId, Map<String, dynamic> data) async {
+  Future<void> updateUserProfile(
+      String userId, Map<String, dynamic> data) async {
     await _db.collection('users').doc(userId).update(data);
   }
 
@@ -22,12 +21,9 @@ class UserService {
 
   // Family Dashboard methods
 
-  // Fetches the logged-in parent's full UserModel in one go.
+  // Fetches the logged-in parent's full UserModel 
   Future<UserModel?> getUser(String userId) async {
-    final doc = await _db
-      .collection('users')
-      .doc(userId)
-      .get();
+    final doc = await _db.collection('users').doc(userId).get();
     if (!doc.exists) return null;
     return UserModel.fromFirestore(doc);
   }
@@ -35,28 +31,39 @@ class UserService {
   // Returns a real-time stream of all family members as UserModel objects.
   Stream<List<UserModel>> getFamilyMembers(String familyId) {
     return _db
-      .collection('users')
-      .where('family_id', isEqualTo: familyId)
-      .snapshots()
-      .map((snapshot) => snapshot.docs
-        .map((doc) => UserModel.fromFirestore(doc))
-        .toList());
+        .collection('users')
+        .where('family_id', isEqualTo: familyId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => UserModel.fromFirestore(doc))
+            .toList());
   }
 
-  // Creates a new child or partner document in the users collection.
-  // For children, also appends the new doc ID to the parent's children_id array.
+  Future<List<UserModel>> getFamilyMembersOnce(String familyId) async {
+    final snapshot = await _db
+        .collection('users')
+        .where('family_id', isEqualTo: familyId)
+        .get();
+    return snapshot.docs
+        .map((doc) => UserModel.fromFirestore(doc))
+        .toList();
+  }
   Future<void> addFamilyMember({
     required String name,
     required bool isPartner,
     required String familyId,
     required String parentUid,
   }) async {
+
+    final String role = isPartner ? 'parent' : 'child';
+
     final newDoc = await _db.collection('users').add({
       'display_name': name,
-      'role': isPartner ? 'parent' : 'child',
+      'role': role,
       'family_id': familyId,
       if (!isPartner) 'parent_id': parentUid,
       'total_points': 0,
+      'claimed': false,
     });
 
     if (!isPartner) {
@@ -80,10 +87,7 @@ class UserService {
     required UserModel member,
     required String parentUid,
   }) async {
-    final doc = await _db.collection('users').doc(member.userId).get();
-    final claimed = doc.data()?['claimed'] ?? false;
-
-    if (claimed) {
+    if (member.claimed) {
       await _db.collection('users').doc(member.userId).update({
         'family_id': FieldValue.delete(),
         'parent_id': FieldValue.delete(),
