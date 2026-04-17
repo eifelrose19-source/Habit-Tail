@@ -1,12 +1,13 @@
 import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user_model.dart';
 import '../repositories/user_repository.dart';
 
+
 final userRepositoryProvider = Provider<UserRepository>(
   (ref) => UserRepository(),
 );
+
 class UserState {
   final UserModel? user;
   final bool isLoading;
@@ -35,7 +36,8 @@ class UserState {
 
 class UserNotifier extends Notifier<UserState> {
   late final UserRepository _repository;
-  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? userSubscription;
+
+  StreamSubscription<UserModel?>? _userSubscription;
 
   @override
   UserState build() {
@@ -44,24 +46,17 @@ class UserNotifier extends Notifier<UserState> {
     return const UserState();
   }
 
-  /// Listens to the specific user document in the 'users' collection
+  /// Listens to the specific user document in the 'users' collection.
   void startListening(String userId) {
     state = state.copyWith(isLoading: true, error: null);
     _userSubscription?.cancel();
 
-    _userSubscription = Firebase.Firestore.instance
-        .collection('users')
-        .doc(userId)
-        .snapshots()
-        .listen(
-      (doc) {
-        if (doc.exists) {
-          state = state.copyWith(
-            user: UserModel.fromFirestore(doc),
-            isLoading: false,
-          );
+    _userSubscription = _repository.watchUser(userId).listen(
+      (user) {
+        if (user != null) {
+          state = state.copyWith(user: user, isLoading: false);
         } else {
-          state = state.copyWith(isLoading: false, error: "User not found");
+          state = state.copyWith(isLoading: false, error: 'User not found');
         }
       },
       onError: (error) {
@@ -70,7 +65,7 @@ class UserNotifier extends Notifier<UserState> {
     );
   }
 
-  /// Updates user points (e.g., when a task is approved)
+  /// Updates user points (e.g., when a task is approved).
   Future<void> addPoints(String userId, int points) async {
     try {
       await _repository.addPoints(userId, points);
@@ -80,7 +75,7 @@ class UserNotifier extends Notifier<UserState> {
     }
   }
 
-  /// Deducts user points (e.g., when a reward is claimed)
+  /// Deducts user points (e.g., when a reward is claimed).
   Future<void> subtractPoints(String userId, int points) async {
     try {
       await _repository.addPoints(userId, -points);
@@ -99,3 +94,4 @@ class UserNotifier extends Notifier<UserState> {
 
 final userProvider =
     NotifierProvider<UserNotifier, UserState>(() => UserNotifier());
+

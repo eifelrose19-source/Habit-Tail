@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user_model.dart';
-import '../repositories/user_repository.dart';
 import 'user_provider.dart';
 
 final familyMembersProvider = StreamProvider<List<UserModel>>((ref) {
