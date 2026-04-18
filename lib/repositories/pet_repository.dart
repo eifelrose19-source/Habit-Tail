@@ -14,9 +14,22 @@ class PetRepository {
             .map((doc) => PetModel.fromFirestore(doc))
             .toList());
   }
-
-  /// Updates pet info (like meds or vet info)
+/// One-time fetch of a single pet
+ Future<PetModel?> getPet(String petId) async {
+    final doc = await _db.collection('pets').doc(petId).get();
+    if (!doc.exists) return null;
+    return PetModel.fromFirestore(doc);
+  }
+/// Adds a new pet document
+  Future<void> createPet(PetModel pet) async {
+    await _db.collection('pets').add(pet.toFirestore());
+  }
+/// Updates pet_fields
   Future<void> updatePet(String petId, Map<String, dynamic> data) async {
     await _db.collection('pets').doc(petId).update(data);
+  }
+/// Deletes a pet document
+  Future<void> deletePet(String petId) async {
+    await _db.collection('pets').doc(petId).delete();
   }
 }
