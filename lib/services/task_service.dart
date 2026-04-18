@@ -31,7 +31,7 @@ class TaskService {
     // Clamp points to valid range before saving
     final clampedTask = task.copyWith(
       createdBy: user.uid,
-      points: task.points.clamp(_minPoints, _maxPoints),
+      points: task.points.clamp(_minPointsPerTask, _maxPointsPerTask),
     );
 
     await _repository.createTask(clampedTask);
