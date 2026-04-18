@@ -1,45 +1,28 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/redemption_log_model.dart';
+import '../repositories/redemption_log_repository.dart';
+import '../repositories/user_repository.dart';
 
-class RedemptionLogRepository {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+class RedemptionLogService {
+  final RedemptionLogRepository _repository = RedemptionLogRepository();
+  final UserRepository _userRepository = UserRepository();
 
-  /// Streams logs for the family, filtered by the family_id field
+  /// Streams all redemption logs for a family
   Stream<List<RedemptionLogModel>> watchRedemptionLogs(String familyId) {
-    return _firestore
-        .collection('redemption_log')
-        .where('family_id', isEqualTo: familyId)
-        .orderBy('timestamp', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => RedemptionLogModel.fromFirestore(doc))
-            .toList());
+    return _repository.watchRedemptionLogs(familyId);
   }
 
-  /// Gets a single log by its ID
-  Future<RedemptionLogModel?> getRedemptionLog(String logId) async {
-    final doc = await _firestore.collection('redemption_log').doc(logId).get();
-    if (!doc.exists) return null;
-    return RedemptionLogModel.fromFirestore(doc);
+  /// Parent approves redemption — marks as delivered (Phase 4 Step P)
+  Future<void> approveRedemption(String logId) async {
+    await _repository.updateRedemptionLog(logId, {'status': 'approved'});
   }
 
-  /// Adds a new log to the top-level collection
-  Future<void> createRedemptionLog(RedemptionLogModel log) async {
-    await _firestore
-        .collection('redemption_log')
-        .add(log.toFirestore());
-  }
+  /// Parent rejects redemption — refunds points to child
+  Future<void> rejectRedemption(String logId) async {
+    final log = await _repository.getRedemptionLog(logId);
+    if (log == null) throw Exception('Redemption log not found.');
 
-  /// Updates status or other fields using the doc ID directly
-  Future<void> updateRedemptionLog(String logId, Map<String, dynamic> data) async {
-    await _firestore
-        .collection('redemption_log')
-        .doc(logId)
-        .update(data);
-  }
-
-  /// Deletes a log entry
-  Future<void> deleteRedemptionLog(String logId) async {
-    await _firestore.collection('redemption_log').doc(logId).delete();
+    // Refund points since they were deducted at submission
+    await _userRepository.addPoints(log.childId, log.cost);
+    await _repository.updateRedemptionLog(logId, {'status': 'rejected'});
   }
 }
