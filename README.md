@@ -1,55 +1,46 @@
 HabitTail
-Turning habit-building into a gamified adventure for the next generation.
-
-
-HabitTail is a sophisticated, family-centric behavioral framework engineered to cultivate discipline and agency in children ages 8–12. By synthesizing "Cyber-Pastel" design principles with "Pet Care" gamification, the platform reimagines routine household responsibilities as essential components of a thriving digital ecosystem.
-
-
-Project Overview
-Habit Tail is a cross-generational wellness application designed with a dual-interface philosophy. It provides parents with robust, data-driven oversight through a clean, intuitive management layer, while simultaneously utilizing age-appropriate gamification and vibrant visual feedback to foster consistency and agency in children.
-
-
-Key Features (Currently Implemented)
-Dual-Role Authentication: Distinct onboarding journeys for "Family Creators" (Parents) and "Joiners" (Partners/Children).
-
-
-Parental Mission Control serves as the application's administrative security gate. It is a high-security, authenticated environment designed to provide parents with absolute oversight without compromising the child-friendly experience of the primary interface. By implementing a 4-digit PIN gateway, the app creates a clear barrier and functional boundary between the child's "Engagement Zone" and the parent's "Management Zone."
-
-
-The Unique Family ID System acts as the architectural anchor for the household, enabling a synchronized ecosystem across multiple devices. By utilizing Invite Code Authentication, the app eliminates complex login hurdles, allowing parents to extend "Mission Control" access or "Child View" access to tablets and smartphones via a secure, one-time alphanumeric bridge
-
-
-The Cyber-Pastel Design System is a bespoke visual language engineered to bridge the gap between high-tech utility and approachable softness. By prioritizing "Visual Evenness," the framework ensures that every screen feels like part of a singular, cohesive world, reducing visual clutter for parents while maintaining a high-engagement environment for children.
-
-
-The Design Process
-This project was built with a Product-First approach. Before a single pixel was placed in Figma, I spent 3 hours on paper documentation defining:
-
-
-Padding & Spacing Scales: Ensuring a consistent 8pt grid system for professional "rhythm".
-
-
-Security Logic: Mapping out the edge cases for "Partner" invites versus "Child" joins.
-
-
-Demographic Specifics: Tailoring the UI for 8-12 year olds who have their own devices but still require parental oversight.
-
-
-Technical Stack
-Design: Figma (High-Fidelity Prototyping)
-
-
-Framework: Flutter / Dart
-
-
-Architecture: Role-Based Access Control (RBAC) logic
-
-
+Gamifying real world responsibility for kids
+HabitTail is a family focused habit building app that helps children ages 8 to 12 build consistency and accountability through real world responsibilities, with a focus on pet care.
+Parents assign tasks and define rewards. Children complete those tasks and earn real incentives such as screen time, money, or custom rewards.
+Overview
+HabitTail provides two distinct experiences within one system
+Parents use a secure control layer to manage tasks, rewards, and access
+Children use a simplified interface to track progress and complete responsibilities
+The system is designed to reinforce consistency through clear structure and reward feedback
+Core Features
+Role Based Access
+Parents have full control over task creation, rewards, and system settings
+Children have restricted access focused on task completion and progress
+Parental Mission Control
+Secure admin layer protected by a 4 digit PIN
+Separates management from the child experience
+Central hub for tasks and reward configuration
+Family ID System
+Unique Family ID connects all devices
+Invite codes allow fast onboarding
+No complex account setup required for children
+Task and Reward System
+Parents assign real world responsibilities such as pet care or chores
+Children complete tasks to earn rewards
+Rewards are fully customizable including screen time, money, or activities
+Design System
+Cyber Pastel visual style
+Designed for clarity and engagement across age groups
+How It Works
+Parent creates tasks
+Child completes responsibilities
+Parent verifies completion
+Child receives reward
+Tech Stack
+Flutter and Dart
+Figma for design
+Role Based Access Control architecture
+Status
+In development
+Core systems and authentication implemented
 Roadmap
-[ ] Phase 2: The Pet Room (Interactive dashboards for kids)
-
-
-[ ] Phase 3: The Proof Vault (Camera-based task verification)
-
-
-[ ] Phase 4: The Reward Shop (In-app currency exchange for real-world rewards)
+Pet care tracking improvements
+Photo based task verification
+Reward redemption system
+Purpose
+HabitTail is designed to help children build real responsibility through consistent action, while giving parents a flexible system to guide and reward that behavior.
