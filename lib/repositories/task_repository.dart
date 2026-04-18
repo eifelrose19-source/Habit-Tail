@@ -15,6 +15,28 @@ class TaskRepository {
             .toList());
   }
 
+  Stream<List<TaskModel>> watchChildTasks(String familyID, String childId) {
+    return _db
+      .collection('tasks')
+      .where('family_id', isEqualTo: familyId)
+      .where('assigned_to', arrayContains: childId)
+      .snapshots()
+      .map((snapshot) => snapshot.docs
+        .map((doc) => TaskModel.fromFirestore(doc))
+        .toList());
+  }
+  /// Live stream of tasks pending parent approval
+  /// Used by parent dashboard notification badge
+  Stream<List<TaskModel>> watchPendingApprovalTasks(String familyId) {
+    return _db
+      .collection('tasks')
+      .where('family_id', isEqualTo: familyId)
+      .where('status', isEqualTo: 'pending_approval')
+      .snapshots()
+      .map((snapshot) => snapshot.docs
+        .map((doc) => TaskModel.fromFirestore(doc))
+        .toList());
+  }
   /// One-time fetch of a single task using the document ID.
   Future<TaskModel?> getTask(String taskId) async {
     final doc = await _db.collection('tasks').doc(taskId).get();
@@ -37,11 +59,31 @@ class TaskRepository {
     return _db.collection('tasks').doc(taskId).delete();
   }
 
-  /// Marks a task as completed and sets the timestamp.
-  Future<void> completeTask(String taskId) {
-    return _db.collection('tasks').doc(taskId).update({
-      'status': 'completed',
-      'last_completed': FieldValue.serverTimestamp(),
-    });
+  /// Child marks task complete - moves to pending_approval
+  /// Parent must approve before points are awarded
+Future<void> submitForApproval(String taskId) {
+  return _db.collection('tasks').doc(taskId).update({
+    'status': 'pending_approval',
+  });
+}
+/// Parent rejects task - returns to todo with optional note
+Future<void> rejectTask(String taskId) {
+  return _db.collection('tasks').doc(taskId).update({
+    'status': 'todo',
+  });
+}
+/// Deletes all tasks linked to a specific pet_id 
+/// Is used when a pet is deleted
+Future<void> deleteTasksByPet(String petId) async {
+  final snapshot = await _db
+    .collection('tasks')
+    .where('pet_id', isEqualTo: petId)
+    .get();
+  
+  final batch = _db.batch();
+  for (final doc in snapshot.docs) {
+    batch.delete(doc.reference);
   }
+  await batch.commit();
+}
 }
