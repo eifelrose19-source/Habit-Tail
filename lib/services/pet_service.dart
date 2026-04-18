@@ -1,33 +1,31 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/pet_model.dart';
+import '../repositories/pet_repository.dart';
+import 'task_service.dart';
 
 class PetService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final PetRepository _repository = PetRepository();
+  // ADDED: needed to delete linked tasks when a pet is removed
+  final TaskService _taskService = TaskService();
 
-  /// Returns a stream of pet documents filtered by the family_id field.
-  Stream<QuerySnapshot<Map<String, dynamic>>> getPetStream(String familyId) {
-    return _db
-        .collection('pets')
-        .where('family_id', isEqualTo: familyId)
-        .snapshots();
+  /// Streams all pets for a family
+  Stream<List<PetModel>> watchFamilyPets(String familyId) {
+    return _repository.watchPets(familyId);
   }
 
-  /// Updates a specific pet document 
-  Future<void> updatePetRaw(String petId, Map<String, dynamic> data) {
-    return _db.collection('pets').doc(petId).update(data);
+  /// Adds a new pet to the family
+  Future<void> createPet(PetModel pet) async {
+    await _repository.createPet(pet);
   }
-  Future<void> deletePetAndTasks(String petId, String petName) async {
-    final batch = _db.batch();
 
-    batch.delete(_db.collection('pets').doc(petId));
+  /// Updates pet info — vet details, meds, etc.
+  Future<void> updatePet(String petId, Map<String, dynamic> data) async {
+    await _repository.updatePet(petId, data);
+  }
 
-    final taskDocs = await _db
-      .collection('tasks')
-      .where('pet_name', isEqualTo: petName)
-      .get();
-
-    for (var doc in taskDocs.docs) {
-      batch.delete(doc.reference);
-    }
-    await batch.commit();
+  /// Deletes pet and all tasks linked to it atomically
+  // FIXED: now queries by pet_id instead of pet_name
+  Future<void> deletePet(String petId) async {
+    await _taskService.deleteTasksByPet(petId);
+    await _repository.deletePet(petId);
   }
 }
