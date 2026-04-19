@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/family_provider.dart';
 import '../../repositories/user_repository.dart';
+import '../../providers/user_provider.dart';
 import 'who_are_you_screen.dart';
 
 class JoinFamilyScreen extends ConsumerStatefulWidget {
