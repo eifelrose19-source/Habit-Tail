@@ -7,10 +7,12 @@ import '../parent_ui/parent_dashboard_screen.dart';
 
 class ManageFamilyScreen extends ConsumerStatefulWidget {
   final String parentalPin;
+  final String familyCode;
 
   const ManageFamilyScreen({
     super.key,
     required this.parentalPin,
+    required this.familyCode,
   });
 
   @override
@@ -69,6 +71,7 @@ class _ManageFamilyScreenState extends ConsumerState<ManageFamilyScreen> {
           creatorName: ref.read(authProvider).user?.displayName ?? 'Parent',
           parentalPin: widget.parentalPin,
           memberSlots: memberSlots,
+          familyCode: widget.familyCode,
         );
 
     final error = ref.read(familyProvider).error;

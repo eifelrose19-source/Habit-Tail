@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/family_provider.dart';
 import '../../providers/auth_provider.dart';
-import 'manage_family_screen.dart';
+import 'create_family_code_screen.dart';
 
 class CreatePinScreen extends ConsumerStatefulWidget {
   const CreatePinScreen({super.key});
@@ -91,7 +91,7 @@ class _CreatePinScreenState extends ConsumerState<CreatePinScreen> {
 
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => ManageFamilyScreen(parentalPin: _pin),
+        builder: (_) => CreateFamilyCodeScreen(parentalPin: _pin),
       ),
     );
   }

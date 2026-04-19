@@ -61,6 +61,7 @@ class FamilyNotifier extends Notifier<FamilyState> {
   Future<void> createFamily({
     required String creatorName,
     required String parentalPin,
+    required String familyCode,
     required List<Map<String, dynamic>> memberSlots,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
@@ -69,7 +70,7 @@ class FamilyNotifier extends Notifier<FamilyState> {
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid == null) throw Exception('Not signed in');
 
-      final familyId = generateFamilyId();
+      final familyId = familyCode;
 
       // Creator's own doc — claimed: true, role: parent from the start
       final creatorDoc = UserModel(
