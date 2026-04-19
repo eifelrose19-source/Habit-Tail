@@ -9,8 +9,8 @@ import 'providers/auth_provider.dart';
 import 'providers/user_provider.dart';
 
 // --- Screen Imports---
-// import 'screens/auth/splash_screen.dart';
-// import 'screens/auth/login_screen.dart';
+import 'screens/auth_flow/splash_screen.dart';
+import 'screens/auth_flow/login_screen.dart';
 // import 'screens/auth/signup_screen.dart';
 // import 'screens/onboarding/create_or_join_screen.dart';
 // import 'screens/onboarding/who_are_you_screen.dart';
@@ -84,26 +84,17 @@ class _RootRouter extends ConsumerWidget {
 
     // Auth still initialising on cold start
     if (auth.isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-      // Replace with: return const SplashScreen();
+      return const SplashScreen();
     }
 
     // Not logged in
     if (!auth.isAuthenticated) {
-      return const Scaffold(
-        body: Center(child: Text('Login Screen Coming Soon')),
-      );
-      // Replace with: return const LoginScreen();
+      return LoginScreen();
     }
 
     // Logged in but Firestore doc still loading
     if (user.isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-      // Replace with: return const SplashScreen();
+      return const SplashScreen();
     }
 
     // Logged in but no family set up yet
