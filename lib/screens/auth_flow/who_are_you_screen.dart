@@ -60,14 +60,6 @@ class _WhoAreYouScreenState extends ConsumerState<WhoAreYouScreen> {
     setState(() {});
   }
 
-  void _onPinBackspace(int index) {
-    if (_pinControllers[index].text.isEmpty && index > 0) {
-      _pinControllers[index - 1].clear();
-      _pinFocusNodes[index - 1].requestFocus();
-      setState(() {});
-    }
-  }
-
   Future<void> _onSlotTapped(UserModel slot) async {
     // Show confirmation dialog first
     final confirmed = await showDialog<bool>(
