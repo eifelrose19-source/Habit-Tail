@@ -4,6 +4,7 @@ import '../../theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../main.dart';
 import 'signup_screen.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -28,7 +29,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString(), style: AppTheme.caption(color: AppTheme.surface)),
+            content: Text(e.toString(),
+                style: AppTheme.caption(color: AppTheme.surface)),
             backgroundColor: AppTheme.statusRejected,
           ),
         );
@@ -49,13 +51,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         decoration: AppTheme.backgroundGradient,
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXL),
+            padding:
+                const EdgeInsets.symmetric(horizontal: AppTheme.spacingXL),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: AppTheme.spacingXXL),
 
-                // Screen title
+                // Title
                 Text('Log In', style: AppTheme.h2()),
 
                 const SizedBox(height: AppTheme.spacingL),
@@ -81,7 +84,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       )
                     : _GoogleSignInButton(onTap: _signInWithGoogle),
 
-                const SizedBox(height: AppTheme.spacingXL),
+                const SizedBox(height: AppTheme.spacingL),
+
+                // Forgot password link
+                Center(
+                  child: GestureDetector(
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                          builder: (_) => const ForgotPasswordScreen()),
+                    ),
+                    child:
+                        Text('Forgot Password?', style: AppTheme.linkText()),
+                  ),
+                ),
+
+                const SizedBox(height: AppTheme.spacingL),
 
                 // Sign up link
                 Center(
@@ -130,13 +147,15 @@ class _GoogleSignInButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Google G icon
             Image.network(
               'https://www.google.com/favicon.ico',
               width: 24,
               height: 24,
-              errorBuilder: (_, __, ___) => const Icon(Icons.g_mobiledata,
-                  size: 24, color: Colors.red),
+              errorBuilder: (_, __, ___) => const Icon(
+                Icons.g_mobiledata,
+                size: 24,
+                color: Colors.red,
+              ),
             ),
             const SizedBox(width: AppTheme.spacingM),
             Text('Log in with Google', style: AppTheme.buttonText()),
