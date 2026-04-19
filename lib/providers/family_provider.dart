@@ -210,7 +210,18 @@ class FamilyNotifier extends Notifier<FamilyState> {
       (i) => chars[(random >> (i * 5)) % chars.length],
     ).join();
   }
+  /// Saves pin for User
+  Future<void> savePinForUser(String uid, String pin) async {
+  state = state.copyWith(isLoading: true, clearError: true);
+  try {
+    await _repository.updateUser(uid, {'parentalPin': pin});
+    state = state.copyWith(isLoading: false);
+  } catch (e) {
+    state = state.copyWith(isLoading: false, error: e.toString());
+  }
 }
+}
+
 
 final familyProvider =
     NotifierProvider<FamilyNotifier, FamilyState>(() => FamilyNotifier());
