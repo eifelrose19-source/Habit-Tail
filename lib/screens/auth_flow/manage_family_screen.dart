@@ -27,7 +27,9 @@ class _ManageFamilyScreenState extends ConsumerState<ManageFamilyScreen> {
   @override
   void dispose() {
     _partnerController.dispose();
-    for (final c in _childControllers) c.dispose();
+    for (final c in _childControllers) {
+      c.dispose();
+  }
     super.dispose();
   }
 
