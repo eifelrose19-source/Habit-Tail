@@ -34,8 +34,12 @@ class _WhoAreYouScreenState extends ConsumerState<WhoAreYouScreen> {
 
   @override
   void dispose() {
-    for (final c in _pinControllers) c.dispose();
-    for (final f in _pinFocusNodes) f.dispose();
+    for (final c in _pinControllers) {
+      c.dispose();
+    }
+    for (final f in _pinFocusNodes) {
+      f.dispose();
+    }
     super.dispose();
   }
 
@@ -43,7 +47,9 @@ class _WhoAreYouScreenState extends ConsumerState<WhoAreYouScreen> {
     setState(() {
       _selectedSlot = null;
       _showPinEntry = false;
-      for (final c in _pinControllers) c.clear();
+      for (final c in _pinControllers) {
+        c.clear();
+    }
     });
   }
 
@@ -107,7 +113,9 @@ class _WhoAreYouScreenState extends ConsumerState<WhoAreYouScreen> {
     setState(() {
       _selectedSlot = slot;
       _showPinEntry = slot.isParent;
-      for (final c in _pinControllers) c.clear();
+      for (final c in _pinControllers) {
+        c.clear();
+      }
     });
 
     if (!slot.isParent) {
