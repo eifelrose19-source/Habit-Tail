@@ -11,11 +11,11 @@ import 'providers/user_provider.dart';
 // --- Screen Imports---
 import 'screens/auth_flow/splash_screen.dart';
 import 'screens/auth_flow/login_screen.dart';
-// import 'screens/auth/signup_screen.dart';
-// import 'screens/onboarding/create_or_join_screen.dart';
-// import 'screens/onboarding/who_are_you_screen.dart';
-// import 'screens/parent/parent_dashboard.dart';
-// import 'screens/child/child_dashboard.dart';
+//import 'screens/auth_flow/signup_screen.dart';
+//import 'screens/auth_flow/createorjoin_screen.dart';
+//import 'screens/auth_flow/who_are_you_screen.dart';
+//import 'screens/parent_ui/parent_dashboard.dart';
+//import 'screens/child_ui/child_dashboard.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -68,14 +68,14 @@ class HabitTailApp extends StatelessWidget {
           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
       ),
-      home: const _RootRouter(),
+      home: const SplashScreen(),
     );
   }
 }
 
 /// Watches auth and user state and routes accordingly.
-class _RootRouter extends ConsumerWidget {
-  const _RootRouter();
+class RootRouter extends ConsumerWidget {
+  const RootRouter({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

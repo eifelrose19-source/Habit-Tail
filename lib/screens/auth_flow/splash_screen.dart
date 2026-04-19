@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme/app_theme.dart';
-import 'login_screen.dart';
+import '../../main.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -15,11 +15,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Navigate to LoginScreen after 3 seconds
-    Timer(const Duration(seconds: 3), () {
+    Timer(const Duration(seconds: 6), () {
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => LoginScreen()),
+          MaterialPageRoute(builder: (context) => RootRouter()),
         );
       }
     });
@@ -27,6 +26,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -36,32 +37,39 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Spacer(flex: 2),
-              
-              // App Logo / Text Image
+              const Spacer(flex: 1),
+
+              // Logo
               Image.asset(
                 'assets/images/icons/hbtletters.png',
-                width: MediaQuery.of(context).size.width * 0.7,
-                fit: BoxFit.contain,
-              ),
-              
-              const SizedBox(height: AppTheme.spacingL),
-
-              // Pet Group Image
-              Image.asset(
-                'assets/images/icons/hbtapp_icon.png',
-                width: MediaQuery.of(context).size.width * 0.8,
+                width: screenWidth * 0.65,
                 fit: BoxFit.contain,
               ),
 
               const Spacer(flex: 1),
-              
-              // Loading Indicator (Optional, for polish)
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.electricSky),
+
+              // Animals
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Image.asset(
+                    'assets/images/icons/hbtdog.png',
+                    width: screenWidth * 0.35,
+                    fit: BoxFit.contain,
+                  ),
+                  Image.asset(
+                    'assets/images/icons/hbthamster.png',
+                    width: screenWidth * 0.30,
+                    fit: BoxFit.contain,
+                  ),
+                  Image.asset(
+                    'assets/images/icons/hbtkitty.png',
+                    width: screenWidth * 0.35,
+                    fit: BoxFit.contain,
+                  ),
+                ],
               ),
-              
-              const Spacer(flex: 1),
             ],
           ),
         ),
