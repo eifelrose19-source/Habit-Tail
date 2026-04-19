@@ -25,24 +25,13 @@ class _CreatePinScreenState extends ConsumerState<CreatePinScreen> {
 
   @override
   void dispose() {
-    for (final c in _controllers) c.dispose();
-    for (final f in _focusNodes) f.dispose();
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    for (final f in _focusNodes) {
+      f.dispose();
+    }
     super.dispose();
-  }
-
-  void _onDigitEntered(int index, String value) {
-    if (value.isNotEmpty && index < 3) {
-      _focusNodes[index + 1].requestFocus();
-    }
-    setState(() {});
-  }
-
-  void _onBackspace(int index) {
-    if (_controllers[index].text.isEmpty && index > 0) {
-      _controllers[index - 1].clear();
-      _focusNodes[index - 1].requestFocus();
-      setState(() {});
-    }
   }
 
   void _copyPin() {
@@ -160,24 +149,6 @@ class _CreatePinScreenState extends ConsumerState<CreatePinScreen> {
                               : Colors.transparent,
                           width: 1.5,
                         ),
-                      ),
-                      child: TextField(
-                        controller: _controllers[index],
-                        focusNode: _focusNodes[index],
-                        textAlign: TextAlign.center,
-                        keyboardType: TextInputType.number,
-                        maxLength: 1,
-                        obscureText: true,
-                        style: AppTheme.h2(),
-                        decoration: const InputDecoration(
-                          counterText: '',
-                          border: InputBorder.none,
-                        ),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        onChanged: (value) => _onDigitEntered(index, value),
-                        onKeyboardAppearanceBrightness: null,
                       ),
                     );
                   }),
