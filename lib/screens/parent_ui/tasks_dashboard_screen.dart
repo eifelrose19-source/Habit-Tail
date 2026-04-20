@@ -21,13 +21,44 @@ enum TaskSortOption { timeCreated, pet, child }
 final _taskSortProvider =
     StateProvider<TaskSortOption>((ref) => TaskSortOption.timeCreated);
 
+// ─── Highlight Task Provider ──────────────────────────────────────────────────
+
+final _highlightTaskIdProvider = StateProvider<String?>((ref) => null);
+
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
-class TasksDashboardScreen extends ConsumerWidget {
-  const TasksDashboardScreen({super.key});
+class TasksDashboardScreen extends ConsumerStatefulWidget {
+  /// When provided, the list scrolls to and highlights this task on load.
+  final String? highlightTaskId;
+  const TasksDashboardScreen({super.key, this.highlightTaskId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TasksDashboardScreen> createState() =>
+      _TasksDashboardScreenState();
+}
+
+class _TasksDashboardScreenState extends ConsumerState<TasksDashboardScreen> {
+  final _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.highlightTaskId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(_highlightTaskIdProvider.notifier).state =
+            widget.highlightTaskId;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final userName = ref.watch(userProvider).user?.name ?? 'Parent';
 
     return AppTheme.familyScreenWrapper(
@@ -36,6 +67,7 @@ class TasksDashboardScreen extends ConsumerWidget {
           _TasksAppBar(userName: userName),
           Expanded(
             child: SingleChildScrollView(
+              controller: _scrollController,
               padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXL),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -45,7 +77,7 @@ class TasksDashboardScreen extends ConsumerWidget {
                   const SizedBox(height: AppTheme.spacingL),
                   const _SortBar(),
                   const SizedBox(height: AppTheme.spacingM),
-                  const _TaskList(),
+                  _TaskList(scrollController: _scrollController),
                   const SizedBox(height: AppTheme.spacingXXL),
                 ],
               ),
@@ -469,7 +501,8 @@ class _SortBar extends ConsumerWidget {
 // ─── Task List ────────────────────────────────────────────────────────────────
 
 class _TaskList extends ConsumerWidget {
-  const _TaskList();
+  final ScrollController scrollController;
+  const _TaskList({required this.scrollController});
 
   List<TaskModel> _sorted(
     List<TaskModel> tasks,
@@ -551,10 +584,34 @@ class _TaskList extends ConsumerWidget {
         final pets = petsAsync.valueOrNull ?? [];
         final members = membersAsync.valueOrNull ?? [];
         final sorted = _sorted(tasks, sortOption, pets, members);
+        final highlightId = ref.watch(_highlightTaskIdProvider);
+
+        // Scroll to highlighted task after layout
+        if (highlightId != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final index =
+                sorted.indexWhere((t) => t.taskId == highlightId);
+            if (index != -1 && scrollController.hasClients) {
+              // Approximate card height + spacing
+              const cardHeight = 90.0;
+              const formOffset = 320.0; // create form + sort bar
+              scrollController.animateTo(
+                formOffset + (index * (cardHeight + AppTheme.itemGap)),
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeOut,
+              );
+            }
+          });
+        }
 
         return Column(
           children: sorted
-              .map((t) => _TaskCard(task: t, pets: pets, members: members))
+              .map((t) => _TaskCard(
+                    task: t,
+                    pets: pets,
+                    members: members,
+                    isHighlighted: t.taskId == highlightId,
+                  ))
               .toList(),
         );
       },
@@ -568,11 +625,13 @@ class _TaskCard extends StatelessWidget {
   final TaskModel task;
   final List<PetModel> pets;
   final List<UserModel> members;
+  final bool isHighlighted;
 
   const _TaskCard({
     required this.task,
     required this.pets,
     required this.members,
+    this.isHighlighted = false,
   });
 
   String get _petName =>
@@ -593,7 +652,11 @@ class _TaskCard extends StatelessWidget {
         horizontal: AppTheme.spacingM,
         vertical: AppTheme.spacingS,
       ),
-      decoration: AppTheme.cardDecoration(color: AppTheme.cardLight),
+      decoration: isHighlighted
+          ? AppTheme.cardDecoration(color: AppTheme.cardLight).copyWith(
+              border: Border.all(color: AppTheme.softIris, width: 2),
+            )
+          : AppTheme.cardDecoration(color: AppTheme.cardLight),
       child: Row(
         children: [
           // Task details
