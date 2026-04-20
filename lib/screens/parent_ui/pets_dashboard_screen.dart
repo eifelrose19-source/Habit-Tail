@@ -15,7 +15,14 @@ import '../parent_ui/tasks_dashboard_screen.dart';
 
 // ─── Selected Pet Provider ────────────────────────────────────────────────────
 
-final _selectedPetProvider = NotifierProvider<PetModel?>((ref) => null);
+class _SelectedPetNotifier extends Notifier<PetModel?> {
+  @override
+  PetModel? build() => null;
+  void set(PetModel? pet) => state = pet;
+}
+
+final _selectedPetProvider =
+    NotifierProvider<_SelectedPetNotifier, PetModel?>(_SelectedPetNotifier.new);
 
 // ─── Pet Type Asset Helper ────────────────────────────────────────────────────
 
@@ -46,8 +53,8 @@ class PetsDashboardScreen extends ConsumerWidget {
     ref.listen(familyPetsProvider, (_, next) {
       next.whenData((pets) {
         if (pets.isNotEmpty &&
-            ref.read(_selectedPetProvider).state == null) {
-          ref.read(_selectedPetProvider.notifier).state = pets.first;
+            ref.read(_selectedPetProvider) == null) {
+          ref.read(_selectedPetProvider.notifier).set(pets.first);
         }
       });
     });
@@ -191,7 +198,7 @@ class _PetsRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedPet = ref.watch(_selectedPetProvider).state;
+    final selectedPet = ref.watch(_selectedPetProvider);
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -201,7 +208,7 @@ class _PetsRow extends ConsumerWidget {
           final isSelected = selectedPet?.petId == pet.petId;
           return GestureDetector(
             onTap: () =>
-                ref.read(_selectedPetProvider.notifier).state = pet,
+                ref.read(_selectedPetProvider.notifier).set(pet),
             child: Padding(
               padding: const EdgeInsets.symmetric(
                   horizontal: AppTheme.spacingS),
@@ -251,7 +258,7 @@ class _SelectedPetTaskSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedPet = ref.watch(_selectedPetProvider).state;
+    final selectedPet = ref.watch(_selectedPetProvider);
     final tasksAsync = ref.watch(familyTasksProvider);
     final membersAsync = ref.watch(familyMembersProvider);
 
@@ -416,7 +423,7 @@ class _SelectedPetInfoSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedPet = ref.watch(_selectedPetProvider).state;
+    final selectedPet = ref.watch(_selectedPetProvider);
     if (selectedPet == null) return const SizedBox.shrink();
 
     return Container(
@@ -616,7 +623,7 @@ class _EditPetSheetState extends ConsumerState<_EditPetSheet> {
 
     if (mounted) {
       // Refresh selected pet state with updated values
-      ref.read(_selectedPetProvider.notifier).state = null;
+      ref.read(_selectedPetProvider.notifier).set(null);
       Navigator.pop(context);
     }
   }
@@ -624,7 +631,7 @@ class _EditPetSheetState extends ConsumerState<_EditPetSheet> {
   Future<void> _delete() async {
     await ref.read(petProvider.notifier).deletePet(widget.pet.petId);
     if (mounted) {
-      ref.read(_selectedPetProvider.notifier).state = null;
+      ref.read(_selectedPetProvider.notifier).set(null);
       Navigator.pop(context);
     }
   }
