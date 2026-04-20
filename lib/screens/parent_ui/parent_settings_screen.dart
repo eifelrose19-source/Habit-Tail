@@ -997,7 +997,7 @@ class _NotificationsSectionState extends State<_NotificationsSection> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: AppTheme.softIris,
+            activeThumbColor: AppTheme.softIris,
           ),
         ],
       ),
