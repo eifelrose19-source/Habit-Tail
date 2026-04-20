@@ -6,7 +6,7 @@ import '../../providers/pet_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../models/task_model.dart';
 import '../../models/pet_model.dart';
-import '../child_ui/child_shop_screen.dart';
+import '../child_ui/child_shop_dashboard_screen.dart';
 import '../child_ui/child_settings_screen.dart';
 
 class ChildDashboardScreen extends ConsumerWidget {
@@ -161,7 +161,7 @@ class _AssignedPetsSection extends ConsumerWidget {
                 style: AppTheme.caption(
                     color: AppTheme.statusRejected)),
             data: (tasks) {
-              final pets = petsAsync.valueOrNull ?? [];
+              final pets = petsAsync.asData?.value ?? [];
               // Pets that have at least one task assigned to this child
               final assignedPetIds =
                   tasks.map((t) => t.petId).toSet();
@@ -279,7 +279,7 @@ class _ChildTaskList extends ConsumerWidget {
           );
         }
 
-        final pets = petsAsync.valueOrNull ?? [];
+        final pets = petsAsync.asData?.value ?? [];
 
         return Column(
           children: tasks
