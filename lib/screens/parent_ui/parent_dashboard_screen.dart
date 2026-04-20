@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/pet_provider.dart';
 import '../../providers/user_provider.dart';
+import '../../providers/family_provider.dart';
 import '../../providers/task_provider.dart';
 import '../../models/task_model.dart';
 import '../../models/user_model.dart';
