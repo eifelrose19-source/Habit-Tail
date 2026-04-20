@@ -14,8 +14,14 @@ import '../parent_ui/parent_settings_screen.dart';
 
 enum RewardSortOption { title, cost, status }
 
+class _RewardSortNotifier extends Notifier<RewardSortOption> {
+  @override
+  RewardSortOption build() => RewardSortOption.title;
+  void set(RewardSortOption opt) => state = opt;
+}
+
 final _rewardSortProvider =
-    StateProvider<RewardSortOption>((ref) => RewardSortOption.title);
+    NotifierProvider<_RewardSortNotifier, RewardSortOption>(_RewardSortNotifier.new);
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
@@ -298,7 +304,7 @@ class _SortBar extends ConsumerWidget {
               final selected = opt == current;
               return GestureDetector(
                 onTap: () {
-                  ref.read(_rewardSortProvider.notifier).state = opt;
+                  ref.read(_rewardSortProvider.notifier).set(opt);
                   Navigator.pop(context);
                 },
                 child: Container(
@@ -334,7 +340,7 @@ class _SortBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final current = ref.watch(_rewardSortProvider).state;
+    final current = ref.watch(_rewardSortProvider);
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -405,7 +411,7 @@ class _RewardList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final rewardsAsync = ref.watch(familyRewardsProvider);
     final logsAsync = ref.watch(familyRedemptionLogsProvider);
-    final sortOption = ref.watch(_rewardSortProvider).state;
+    final sortOption = ref.watch(_rewardSortProvider);
 
     return rewardsAsync.when(
       loading: () => const Center(
