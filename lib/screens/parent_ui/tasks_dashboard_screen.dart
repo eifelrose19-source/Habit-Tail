@@ -230,8 +230,8 @@ class _CreateTaskFormState extends ConsumerState<_CreateTaskForm> {
     final membersAsync = ref.watch(familyMembersProvider);
     final isLoading = ref.watch(taskProvider).isLoading;
 
-    final pets = petsAsync.valueOrNull ?? [];
-    final children = (membersAsync.valueOrNull ?? [])
+    final pets = petsAsync.asData?.value ?? [];
+    final children = (membersAsync.asData?.value ?? [])
         .where((m) => !m.isParent)
         .toList();
 
@@ -391,7 +391,7 @@ class _SortBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final current = ref.watch(_taskSortProvider);
+    final current = ref.watch(_taskSortProvider).state;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
@@ -552,7 +552,7 @@ class _TaskList extends ConsumerWidget {
     final tasksAsync = ref.watch(familyTasksProvider);
     final petsAsync = ref.watch(familyPetsProvider);
     final membersAsync = ref.watch(familyMembersProvider);
-    final sortOption = ref.watch(_taskSortProvider);
+    final sortOption = ref.watch(_taskSortProvider).state;
 
     return tasksAsync.when(
       loading: () => const Center(
@@ -581,10 +581,10 @@ class _TaskList extends ConsumerWidget {
           );
         }
 
-        final pets = petsAsync.valueOrNull ?? [];
-        final members = membersAsync.valueOrNull ?? [];
+        final pets = petsAsync.asData?.value ?? [];
+        final members = membersAsync.asData?.value ?? [];
         final sorted = _sorted(tasks, sortOption, pets, members);
-        final highlightId = ref.watch(_highlightTaskIdProvider);
+        final highlightId = ref.watch(_highlightTaskIdProvider).state;
 
         // Scroll to highlighted task after layout
         if (highlightId != null) {
