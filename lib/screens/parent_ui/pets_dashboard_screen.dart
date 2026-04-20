@@ -46,7 +46,7 @@ class PetsDashboardScreen extends ConsumerWidget {
     ref.listen(familyPetsProvider, (_, next) {
       next.whenData((pets) {
         if (pets.isNotEmpty &&
-            ref.read(_selectedPetProvider) == null) {
+            ref.read(_selectedPetProvider).state == null) {
           ref.read(_selectedPetProvider.notifier).state = pets.first;
         }
       });
@@ -191,7 +191,7 @@ class _PetsRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedPet = ref.watch(_selectedPetProvider);
+    final selectedPet = ref.watch(_selectedPetProvider).state;
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -251,7 +251,7 @@ class _SelectedPetTaskSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedPet = ref.watch(_selectedPetProvider);
+    final selectedPet = ref.watch(_selectedPetProvider).state;
     final tasksAsync = ref.watch(familyTasksProvider);
     final membersAsync = ref.watch(familyMembersProvider);
 
@@ -294,7 +294,7 @@ class _SelectedPetTaskSection extends ConsumerWidget {
               );
             }
 
-            final members = membersAsync.valueOrNull ?? [];
+            final members = membersAsync.asData?.value ?? [];
 
             return Column(
               children: petTasks
@@ -416,7 +416,7 @@ class _SelectedPetInfoSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedPet = ref.watch(_selectedPetProvider);
+    final selectedPet = ref.watch(_selectedPetProvider).state;
     if (selectedPet == null) return const SizedBox.shrink();
 
     return Container(
