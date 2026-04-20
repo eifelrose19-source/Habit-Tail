@@ -439,7 +439,7 @@ class _BottomActions extends StatelessWidget {
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (_) => const ChildShopScreen()),
+                  builder: (_) => const ChildShopDashboardScreen()),
             ),
             style: AppTheme.elevatedButtonStyle,
             child: Text('Shop', style: AppTheme.buttonText()),
