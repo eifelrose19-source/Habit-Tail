@@ -18,12 +18,25 @@ enum TaskSortOption { timeCreated, pet, child }
 
 // ─── Local Sort State Provider ────────────────────────────────────────────────
 
+class _TaskSortNotifier extends Notifier<TaskSortOption> {
+  @override
+  TaskSortOption build() => TaskSortOption.timeCreated;
+  void set(TaskSortOption opt) => state = opt;
+}
+
 final _taskSortProvider =
-    StateProvider<TaskSortOption>((ref) => TaskSortOption.timeCreated);
+    NotifierProvider<_TaskSortNotifier, TaskSortOption>(_TaskSortNotifier.new);
 
 // ─── Highlight Task Provider ──────────────────────────────────────────────────
 
-final _highlightTaskIdProvider = StateProvider<String?>((ref) => null);
+class _HighlightTaskNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+  void set(String? id) => state = id;
+}
+
+final _highlightTaskIdProvider =
+    NotifierProvider<_HighlightTaskNotifier, String?>(_HighlightTaskNotifier.new);
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
@@ -45,8 +58,7 @@ class _TasksDashboardScreenState extends ConsumerState<TasksDashboardScreen> {
     super.initState();
     if (widget.highlightTaskId != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(_highlightTaskIdProvider.notifier).state =
-            widget.highlightTaskId;
+        ref.read(_highlightTaskIdProvider.notifier).set(widget.highlightTaskId);
       });
     }
   }
@@ -391,7 +403,7 @@ class _SortBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final current = ref.watch(_taskSortProvider).state;
+    final current = ref.watch(_taskSortProvider);
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
@@ -466,7 +478,7 @@ class _SortBar extends ConsumerWidget {
               final selected = opt == current;
               return GestureDetector(
                 onTap: () {
-                  ref.read(_taskSortProvider.notifier).state = opt;
+                  ref.read(_taskSortProvider.notifier).set(opt);
                   Navigator.pop(context);
                 },
                 child: Container(
@@ -552,7 +564,7 @@ class _TaskList extends ConsumerWidget {
     final tasksAsync = ref.watch(familyTasksProvider);
     final petsAsync = ref.watch(familyPetsProvider);
     final membersAsync = ref.watch(familyMembersProvider);
-    final sortOption = ref.watch(_taskSortProvider).state;
+    final sortOption = ref.watch(_taskSortProvider);
 
     return tasksAsync.when(
       loading: () => const Center(
@@ -584,7 +596,7 @@ class _TaskList extends ConsumerWidget {
         final pets = petsAsync.asData?.value ?? [];
         final members = membersAsync.asData?.value ?? [];
         final sorted = _sorted(tasks, sortOption, pets, members);
-        final highlightId = ref.watch(_highlightTaskIdProvider).state;
+        final highlightId = ref.watch(_highlightTaskIdProvider);
 
         // Scroll to highlighted task after layout
         if (highlightId != null) {

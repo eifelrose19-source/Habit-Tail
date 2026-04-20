@@ -15,7 +15,7 @@ import '../parent_ui/tasks_dashboard_screen.dart';
 
 // ─── Selected Pet Provider ────────────────────────────────────────────────────
 
-final _selectedPetProvider = StateProvider<PetModel?>((ref) => null);
+final _selectedPetProvider = NotifierProvider<PetModel?>((ref) => null);
 
 // ─── Pet Type Asset Helper ────────────────────────────────────────────────────
 
