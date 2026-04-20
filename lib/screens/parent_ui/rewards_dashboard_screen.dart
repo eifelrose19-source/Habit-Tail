@@ -334,7 +334,7 @@ class _SortBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final current = ref.watch(_rewardSortProvider);
+    final current = ref.watch(_rewardSortProvider).state;
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -405,7 +405,7 @@ class _RewardList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final rewardsAsync = ref.watch(familyRewardsProvider);
     final logsAsync = ref.watch(familyRedemptionLogsProvider);
-    final sortOption = ref.watch(_rewardSortProvider);
+    final sortOption = ref.watch(_rewardSortProvider).state;
 
     return rewardsAsync.when(
       loading: () => const Center(
@@ -429,7 +429,7 @@ class _RewardList extends ConsumerWidget {
           );
         }
 
-        final logs = logsAsync.valueOrNull ?? [];
+        final logs = logsAsync.asData?.value ?? [];
         final sorted = _sorted(rewards, sortOption, logs);
 
         return Column(
