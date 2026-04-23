@@ -105,7 +105,9 @@ class RootRouter extends ConsumerWidget {
 
     // Has family but hasn't claimed a slot yet
     if (!user.isClaimed) {
-      final familyId = user.user!.familyId;
+      final familyId = user.user?.familyId ?? '';
+      if (familyId.isEmpty) return const SplashScreen();
+
       final slotsAsync = ref.watch(availableSlotsProvider(familyId));
 
       return slotsAsync.when(
