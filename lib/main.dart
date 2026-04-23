@@ -11,11 +11,10 @@ import 'providers/user_provider.dart';
 // --- Screen Imports---
 import 'screens/auth_flow/splash_screen.dart';
 import 'screens/auth_flow/login_screen.dart';
-//import 'screens/auth_flow/signup_screen.dart';
-//import 'screens/auth_flow/createorjoin_screen.dart';
-//import 'screens/auth_flow/who_are_you_screen.dart';
-//import 'screens/parent_ui/parent_dashboard.dart';
-//import 'screens/child_ui/child_dashboard.dart';
+import 'screens/auth_flow/signup_screen.dart';
+import 'screens/auth_flow/join_family_screen.dart';
+import 'screens/parent_ui/parent_dashboard_screen.dart';
+import 'screens/child_ui/child_dashboard_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -99,31 +98,18 @@ class RootRouter extends ConsumerWidget {
 
     // Logged in but no family set up yet
     if (user.needsFamilySetup) {
-      return const Scaffold(
-        body: Center(child: Text('Create or Join Screen Coming Soon')),
-      );
-      // Replace with: return const CreateOrJoinScreen();
+      return const SignupScreen();
     }
 
     // Has family but hasn't claimed a slot yet
     if (!user.isClaimed) {
-      return const Scaffold(
-        body: Center(child: Text('Who Are You Screen Coming Soon')),
-      );
-      // Replace with: return const WhoAreYouScreen();
+      return const JoinFamilyScreen();
     }
 
     // Fully onboarded — route by role
     if (user.isParent) {
-      return const Scaffold(
-        body: Center(child: Text('Parent Dashboard Coming Soon')),
-      );
-      // Replace with: return const ParentDashboard();
+      return const ParentDashboardScreen();
     }
-
-    return const Scaffold(
-      body: Center(child: Text('Child Dashboard Coming Soon')),
-    );
-    // Replace with: return const ChildDashboard();
+    return const ChildDashboardScreen();
   }
 }
