@@ -131,29 +131,46 @@ class _CreatePinScreenState extends ConsumerState<CreatePinScreen> {
                 const SizedBox(height: AppTheme.spacingL),
 
                 // 4 PIN boxes
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(4, (index) {
-                    return Container(
-                      width: 56,
-                      height: 56,
-                      margin: const EdgeInsets.symmetric(
-                          horizontal: AppTheme.spacingS),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surface,
-                        borderRadius:
-                            BorderRadius.circular(AppTheme.radiusMedium),
-                        border: Border.all(
-                          color: _focusNodes[index].hasFocus
-                              ? AppTheme.electricSky
-                              : Colors.transparent,
-                          width: 1.5,
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-
+              Row(
+  mainAxisAlignment: MainAxisAlignment.center,
+  children: List.generate(4, (index) {
+    return Container(
+      width: 56,
+      height: 56,
+      margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingS),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        border: Border.all(
+          color: _focusNodes[index].hasFocus
+              ? AppTheme.electricSky
+              : Colors.transparent,
+          width: 1.5,
+        ),
+      ),
+      child: TextField(
+        controller: _controllers[index],
+        focusNode: _focusNodes[index],
+        textAlign: TextAlign.center,
+        keyboardType: TextInputType.number,
+        maxLength: 1,
+        obscureText: true,
+        decoration: const InputDecoration(
+          counterText: '',
+          border: InputBorder.none,
+        ),
+        onChanged: (value) {
+          if (value.isNotEmpty && index < 3) {
+            _focusNodes[index + 1].requestFocus();
+          } else if (value.isEmpty && index > 0) {
+            _focusNodes[index - 1].requestFocus();
+          }
+          setState(() {});
+        },
+      ),
+    );
+  }),
+),
                 const SizedBox(height: AppTheme.spacingXXL),
 
                 // Copy Code + Create Pin buttons
