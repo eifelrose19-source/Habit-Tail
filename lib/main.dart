@@ -7,14 +7,16 @@ import 'firebase_options.dart';
 import 'theme/app_theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/user_provider.dart';
+import 'providers/family_provider.dart';
 
 // --- Screen Imports---
 import 'screens/auth_flow/splash_screen.dart';
 import 'screens/auth_flow/login_screen.dart';
-import 'screens/auth_flow/signup_screen.dart';
 import 'screens/auth_flow/join_family_screen.dart';
+import 'screens/auth_flow/who_are_you_screen.dart';
 import 'screens/parent_ui/parent_dashboard_screen.dart';
 import 'screens/child_ui/child_dashboard_screen.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -98,14 +100,23 @@ class RootRouter extends ConsumerWidget {
 
     // Logged in but no family set up yet
     if (user.needsFamilySetup) {
-      return const SignupScreen();
+      return const JoinFamilyScreen();
     }
 
     // Has family but hasn't claimed a slot yet
     if (!user.isClaimed) {
-      return const JoinFamilyScreen();
-    }
+      final familyId = user.user!.familyId;
+      final slotsAsync = ref.watch(availableSlotsProvider(familyId));
 
+      return slotsAsync.when(
+        loading: () => const SplashScreen(),
+        error: (e, _) => const SplashScreen(),
+        data: (slots) => WhoAreYouScreen(
+          familyId: familyId,
+          availableSlots: slots,
+        ),
+      );
+    }
     // Fully onboarded — route by role
     if (user.isParent) {
       return const ParentDashboardScreen();
