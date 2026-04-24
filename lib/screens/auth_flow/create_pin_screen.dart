@@ -80,7 +80,7 @@ class _CreatePinScreenState extends ConsumerState<CreatePinScreen> {
 
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => CreateFamilyCodeScreen(parentalPin: _pin),
+        builder: (_) => const CreateFamilyCodeScreen(),
       ),
     );
   }

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
-import 'create_pin_screen.dart';
 import 'join_family_screen.dart';
+import 'create_family_code_screen.dart';
 
 class CreateOrJoinScreen extends ConsumerWidget {
   const CreateOrJoinScreen({super.key});
@@ -50,7 +50,7 @@ class CreateOrJoinScreen extends ConsumerWidget {
                   label: 'Create Family',
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => const CreatePinScreen(),
+                      builder: (_) => CreateFamilyCodeScreen(),
                     ),
                   ),
                 ),

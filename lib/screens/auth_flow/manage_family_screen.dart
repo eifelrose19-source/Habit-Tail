@@ -6,12 +6,10 @@ import '../../providers/auth_provider.dart';
 import '../parent_ui/parent_dashboard_screen.dart';
 
 class ManageFamilyScreen extends ConsumerStatefulWidget {
-  final String parentalPin;
   final String familyCode;
 
   const ManageFamilyScreen({
     super.key,
-    required this.parentalPin,
     required this.familyCode,
   });
 
@@ -71,7 +69,6 @@ class _ManageFamilyScreenState extends ConsumerState<ManageFamilyScreen> {
     // Use familyProvider to create the family with all slots
     await ref.read(familyProvider.notifier).createFamily(
           creatorName: ref.read(authProvider).user?.displayName ?? 'Parent',
-          parentalPin: widget.parentalPin,
           memberSlots: memberSlots,
           familyCode: widget.familyCode,
         );

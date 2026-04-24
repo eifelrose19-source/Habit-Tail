@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // ADDED: was missing
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
 import '../repositories/user_repository.dart';
 import '../services/user_service.dart';
@@ -57,10 +57,9 @@ class FamilyNotifier extends Notifier<FamilyState> {
     return const FamilyState();
   }
 
-  /// Creates the family — called from CreateFamilyScreen when User submits.
+  /// Creates the family — called from ManageFamilyScreen.
   Future<void> createFamily({
     required String creatorName,
-    required String parentalPin,
     required String familyCode,
     required List<Map<String, dynamic>> memberSlots,
   }) async {
@@ -80,7 +79,6 @@ class FamilyNotifier extends Notifier<FamilyState> {
         totalPoints: 0,
         isParent: true,
         claimed: true,
-        parentalPin: parentalPin,
       );
 
       // Build seeded slot docs from form data — no UID, claimed: false
@@ -94,7 +92,6 @@ class FamilyNotifier extends Notifier<FamilyState> {
           totalPoints: 0,
           isParent: isPartner,
           claimed: false,
-          parentalPin: isPartner ? parentalPin : null,
           parentId: isPartner ? null : uid,
         ));
       }
@@ -211,18 +208,18 @@ class FamilyNotifier extends Notifier<FamilyState> {
       (i) => chars[(random >> (i * 5)) % chars.length],
     ).join();
   }
-  /// Saves pin for User
+
+  /// Saves PIN for user — called from parent settings after onboarding.
   Future<void> savePinForUser(String uid, String pin) async {
-  state = state.copyWith(isLoading: true, clearError: true);
-  try {
-    await _repository.updateUser(uid, {'parentalPin': pin});
-    state = state.copyWith(isLoading: false);
-  } catch (e) {
-    state = state.copyWith(isLoading: false, error: e.toString());
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      await _repository.updateUser(uid, {'parentalPin': pin});
+      state = state.copyWith(isLoading: false);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
   }
 }
-}
-
 
 final familyProvider =
     NotifierProvider<FamilyNotifier, FamilyState>(() => FamilyNotifier());

@@ -6,12 +6,7 @@ import '../../providers/family_provider.dart';
 import 'manage_family_screen.dart';
 
 class CreateFamilyCodeScreen extends ConsumerStatefulWidget {
-  final String parentalPin;
-
-  const CreateFamilyCodeScreen({
-    super.key,
-    required this.parentalPin,
-  });
+  const CreateFamilyCodeScreen({super.key});
 
   @override
   ConsumerState<CreateFamilyCodeScreen> createState() =>
@@ -131,7 +126,6 @@ class _CreateFamilyCodeScreenState
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => ManageFamilyScreen(
-                        parentalPin: widget.parentalPin,
                         familyCode: _familyCode,
                       ),
                     ),
