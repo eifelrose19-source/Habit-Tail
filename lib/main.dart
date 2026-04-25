@@ -104,7 +104,7 @@ class RootRouter extends ConsumerWidget {
     }
 
     // ── 3. Logged in but Firestore doc still loading ──────────────────────
-    if (user.isLoading) {
+    if (user.isLoading || user.user == null) {
       return const SplashScreen();
     }
 
