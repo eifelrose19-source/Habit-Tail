@@ -14,22 +14,53 @@ class PetRepository {
             .map((doc) => PetModel.fromFirestore(doc))
             .toList());
   }
-/// One-time fetch of a single pet
- Future<PetModel?> getPet(String petId) async {
+
+  /// One-time fetch of a single pet
+  Future<PetModel?> getPet(String petId) async {
     final doc = await _db.collection('pets').doc(petId).get();
     if (!doc.exists) return null;
     return PetModel.fromFirestore(doc);
   }
-/// Adds a new pet document
+
+  /// Adds a new pet document
   Future<void> createPet(PetModel pet) async {
     await _db.collection('pets').add(pet.toFirestore());
   }
-/// Updates pet_fields
+
+  /// Updates pet_fields
   Future<void> updatePet(String petId, Map<String, dynamic> data) async {
     await _db.collection('pets').doc(petId).update(data);
   }
-/// Deletes a pet document
+
+  /// Deletes a pet and all its tasks and rewards atomically using a batch
   Future<void> deletePet(String petId) async {
-    await _db.collection('pets').doc(petId).delete();
+    final batch = _db.batch();
+
+    // 1. Reference the pet
+    final petRef = _db.collection('pets').doc(petId);
+    batch.delete(petRef);
+
+    // 2. Find and delete all tasks linked to this pet_id
+    final taskSnapshots = await _db
+        .collection('tasks')
+        .where('pet_id', isEqualTo: petId)
+        .get();
+
+    for (var doc in taskSnapshots.docs) {
+      batch.delete(doc.reference);
+    }
+
+    // 3. Find and delete all rewards linked to this pet_id
+    final rewardSnapshots = await _db
+        .collection('rewards')
+        .where('pet_id', isEqualTo: petId)
+        .get();
+
+    for (var doc in rewardSnapshots.docs) {
+      batch.delete(doc.reference);
+    }
+
+    // 4. Commit the batch
+    await batch.commit();
   }
 }

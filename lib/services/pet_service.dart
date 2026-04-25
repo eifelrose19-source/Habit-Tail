@@ -1,11 +1,9 @@
 import '../models/pet_model.dart';
 import '../repositories/pet_repository.dart';
-import 'task_service.dart';
 
 class PetService {
   final PetRepository _repository = PetRepository();
-  // ADDED: needed to delete linked tasks when a pet is removed
-  final TaskService _taskService = TaskService();
+  // TaskService no longer needed here as repository handles batch delete
 
   /// Streams all pets for a family
   Stream<List<PetModel>> watchFamilyPets(String familyId) {
@@ -22,10 +20,8 @@ class PetService {
     await _repository.updatePet(petId, data);
   }
 
-  /// Deletes pet and all tasks linked to it atomically
-  // FIXED: now queries by pet_id instead of pet_name
+  /// Deletes pet and all tasks linked to it via repository batch
   Future<void> deletePet(String petId) async {
-    await _taskService.deleteTasksByPet(petId);
     await _repository.deletePet(petId);
   }
 }
