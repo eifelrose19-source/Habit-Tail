@@ -87,7 +87,6 @@ class _SettingsAppBar extends StatelessWidget {
             textAlign: TextAlign.center,
             style: AppTheme.h2(color: AppTheme.surface),
           ),
-          // Home — pops to root (parent dashboard)
           GestureDetector(
             onTap: () =>
                 Navigator.of(context).popUntil((route) => route.isFirst),
@@ -174,8 +173,7 @@ class _SettingsRow extends StatelessWidget {
                   if (subtitle != null)
                     Text(subtitle!,
                         style: AppTheme.caption(
-                            color: AppTheme.midnightPlum
-                                .withAlpha(150))),
+                            color: AppTheme.midnightPlum.withAlpha(150))),
                 ],
               ),
             ),
@@ -202,7 +200,6 @@ class _ProfileSection extends StatelessWidget {
     return _SectionCard(
       title: 'Profile',
       children: [
-        // Avatar display
         Center(
           child: Container(
             width: 72,
@@ -217,7 +214,6 @@ class _ProfileSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppTheme.spacingM),
-
         _SettingsRow(
           icon: Icons.edit_outlined,
           label: 'Edit Name',
@@ -233,7 +229,6 @@ class _ProfileSection extends StatelessWidget {
             builder: (_) => _EditNameSheet(user: user),
           ),
         ),
-
         _SettingsRow(
           icon: Icons.email_outlined,
           label: 'Change Email',
@@ -249,7 +244,6 @@ class _ProfileSection extends StatelessWidget {
             builder: (_) => const _ChangeEmailSheet(),
           ),
         ),
-
         _SettingsRow(
           icon: Icons.lock_outline,
           label: 'Change Password',
@@ -353,16 +347,12 @@ class _ChangeEmailSheetState extends State<_ChangeEmailSheet> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('Not signed in');
-
-      // Re-authenticate before changing email
       final credential = EmailAuthProvider.credential(
         email: user.email ?? '',
         password: _passwordController.text.trim(),
       );
       await user.reauthenticateWithCredential(credential);
-      await user.verifyBeforeUpdateEmail(
-          _newEmailController.text.trim());
-
+      await user.verifyBeforeUpdateEmail(_newEmailController.text.trim());
       if (mounted) Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
       setState(() => _error = e.message);
@@ -443,14 +433,12 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('Not signed in');
-
       final credential = EmailAuthProvider.credential(
         email: user.email ?? '',
         password: _currentController.text.trim(),
       );
       await user.reauthenticateWithCredential(credential);
       await user.updatePassword(_newController.text.trim());
-
       if (mounted) Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
       setState(() => _error = e.message);
@@ -479,8 +467,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
           TextField(
             controller: _newController,
             obscureText: true,
-            decoration:
-                AppTheme.textFieldDecoration(hint: 'New Password'),
+            decoration: AppTheme.textFieldDecoration(hint: 'New Password'),
             style: AppTheme.body(),
           ),
           const SizedBox(height: AppTheme.spacingM),
@@ -574,7 +561,6 @@ class _ChangePinSheetState extends ConsumerState<_ChangePinSheet> {
   Future<void> _save() async {
     final current = _currentPinController.text.trim();
     final newPin = _newPinController.text.trim();
-
     if (current != widget.user?.parentalPin) {
       setState(() => _error = 'Incorrect current PIN');
       return;
@@ -583,12 +569,10 @@ class _ChangePinSheetState extends ConsumerState<_ChangePinSheet> {
       setState(() => _error = 'New PIN cannot be empty');
       return;
     }
-
     await ref.read(familyProvider.notifier).savePinForUser(
           widget.user!.userId,
           newPin,
         );
-
     if (mounted) Navigator.pop(context);
   }
 
@@ -605,8 +589,7 @@ class _ChangePinSheetState extends ConsumerState<_ChangePinSheet> {
             obscureText: true,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration:
-                AppTheme.textFieldDecoration(hint: 'Current PIN'),
+            decoration: AppTheme.textFieldDecoration(hint: 'Current PIN'),
             style: AppTheme.body(),
           ),
           const SizedBox(height: AppTheme.spacingM),
@@ -687,9 +670,7 @@ class _ForgotPinSheetState extends ConsumerState<_ForgotPinSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isLoading =
-        _isLoading || ref.watch(familyProvider).isLoading;
-
+    final isLoading = _isLoading || ref.watch(familyProvider).isLoading;
     return _BottomSheetWrapper(
       title: 'Forgot PIN',
       child: Column(
@@ -709,10 +690,8 @@ class _ForgotPinSheetState extends ConsumerState<_ForgotPinSheet> {
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppTheme.midnightPlum))
-                  : Text('Verify with Google',
-                      style: AppTheme.buttonText()),
+                          strokeWidth: 2, color: AppTheme.midnightPlum))
+                  : Text('Verify with Google', style: AppTheme.buttonText()),
             ),
           ] else ...[
             Text('Identity verified. Set your new PIN.',
@@ -793,8 +772,7 @@ class _DefaultGoldSheet extends ConsumerStatefulWidget {
   const _DefaultGoldSheet({required this.user});
 
   @override
-  ConsumerState<_DefaultGoldSheet> createState() =>
-      _DefaultGoldSheetState();
+  ConsumerState<_DefaultGoldSheet> createState() => _DefaultGoldSheetState();
 }
 
 class _DefaultGoldSheetState extends ConsumerState<_DefaultGoldSheet> {
@@ -812,7 +790,6 @@ class _DefaultGoldSheetState extends ConsumerState<_DefaultGoldSheet> {
     if (value == null || widget.user == null) return;
     setState(() => _isLoading = true);
     try {
-      // Store default gold at family level in Firestore
       await FirebaseFirestore.instance
           .collection('families')
           .doc(widget.user!.familyId)
@@ -834,8 +811,8 @@ class _DefaultGoldSheetState extends ConsumerState<_DefaultGoldSheet> {
             controller: _goldController,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration:
-                AppTheme.textFieldDecoration(hint: 'Default points (e.g. 100)'),
+            decoration: AppTheme.textFieldDecoration(
+                hint: 'Default points (e.g. 100)'),
             style: AppTheme.body(),
           ),
           const SizedBox(height: AppTheme.spacingL),
@@ -864,17 +841,14 @@ class _GoldBalancesSheet extends ConsumerWidget {
         error: (_, __) => Text('Could not load members.',
             style: AppTheme.caption(color: AppTheme.statusRejected)),
         data: (members) {
-          final children =
-              members.where((m) => !m.isParent).toList();
+          final children = members.where((m) => !m.isParent).toList();
           if (children.isEmpty) {
-            return Text('No children in family.',
-                style: AppTheme.body());
+            return Text('No children in family.', style: AppTheme.body());
           }
           return Column(
             children: children.map((child) {
               return Container(
-                margin:
-                    const EdgeInsets.only(bottom: AppTheme.spacingS),
+                margin: const EdgeInsets.only(bottom: AppTheme.spacingS),
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppTheme.spacingM,
                   vertical: AppTheme.spacingS,
@@ -898,13 +872,12 @@ class _GoldBalancesSheet extends ConsumerWidget {
                             color: AppTheme.goldText, size: 16),
                         const SizedBox(width: 4),
                         Text('${child.totalPoints}',
-                            style: AppTheme.goldAmount()
-                                .copyWith(fontSize: 14)),
+                            style:
+                                AppTheme.goldAmount().copyWith(fontSize: 14)),
                         const SizedBox(width: AppTheme.spacingM),
-                        // Reset gold button
                         GestureDetector(
-                          onTap: () => _confirmReset(
-                              context, ref, child),
+                          onTap: () =>
+                              _confirmReset(context, ref, child),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: AppTheme.spacingS,
@@ -935,8 +908,7 @@ class _GoldBalancesSheet extends ConsumerWidget {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppTheme.surface,
-        title: Text('Reset ${child.name}\'s Gold?',
-            style: AppTheme.h2()),
+        title: Text('Reset ${child.name}\'s Gold?', style: AppTheme.h2()),
         content: Text(
           'This will set ${child.name}\'s balance to 0. This cannot be undone.',
           style: AppTheme.body(),
@@ -949,15 +921,14 @@ class _GoldBalancesSheet extends ConsumerWidget {
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
-              // Reset by setting points to negative of current total
               final delta = -child.totalPoints;
               await ref
                   .read(userProvider.notifier)
                   .addPoints(child.userId, delta);
             },
             child: Text('Reset',
-                style: AppTheme.buttonText(
-                    color: AppTheme.statusRejected)),
+                style:
+                    AppTheme.buttonText(color: AppTheme.statusRejected)),
           ),
         ],
       ),
@@ -971,12 +942,10 @@ class _NotificationsSection extends StatefulWidget {
   const _NotificationsSection();
 
   @override
-  State<_NotificationsSection> createState() =>
-      _NotificationsSectionState();
+  State<_NotificationsSection> createState() => _NotificationsSectionState();
 }
 
 class _NotificationsSectionState extends State<_NotificationsSection> {
-  // TODO: Wire to a real notifications provider / FCM when ready
   bool _taskSubmission = false;
   bool _rewardRedemption = false;
   bool _petCare = false;
@@ -1036,17 +1005,12 @@ class _AccountSection extends StatelessWidget {
     return _SectionCard(
       title: 'Account',
       children: [
-        // Linked account — display only
         _SettingsRow(
           icon: isGoogleLinked ? Icons.link : Icons.apple,
-          label: isGoogleLinked
-              ? 'Linked: Google'
-              : 'Linked: Apple',
+          label: isGoogleLinked ? 'Linked: Google' : 'Linked: Apple',
           subtitle: firebaseUser?.email,
           trailing: const SizedBox.shrink(),
         ),
-
-        // Delete account
         _SettingsRow(
           icon: Icons.delete_forever_outlined,
           label: 'Delete Account',
@@ -1112,16 +1076,7 @@ class _DeleteAccountSheetState extends ConsumerState<_DeleteAccountSheet> {
       final familyId = user.familyId;
       final batch = db.batch();
 
-      // 1. Delete all family members (parents + children)
-      final members = await db
-          .collection('users')
-          .where('family_id', isEqualTo: familyId)
-          .get();
-      for (final doc in members.docs) {
-        batch.delete(doc.reference);
-      }
-
-      // 2. Delete all pets
+      // 1. Delete all pets
       final pets = await db
           .collection('pets')
           .where('family_id', isEqualTo: familyId)
@@ -1130,7 +1085,7 @@ class _DeleteAccountSheetState extends ConsumerState<_DeleteAccountSheet> {
         batch.delete(doc.reference);
       }
 
-      // 3. Delete all tasks
+      // 2. Delete all tasks
       final tasks = await db
           .collection('tasks')
           .where('family_id', isEqualTo: familyId)
@@ -1139,7 +1094,7 @@ class _DeleteAccountSheetState extends ConsumerState<_DeleteAccountSheet> {
         batch.delete(doc.reference);
       }
 
-      // 4. Delete all rewards
+      // 3. Delete all rewards
       final rewards = await db
           .collection('rewards')
           .where('family_id', isEqualTo: familyId)
@@ -1148,7 +1103,7 @@ class _DeleteAccountSheetState extends ConsumerState<_DeleteAccountSheet> {
         batch.delete(doc.reference);
       }
 
-      // 5. Delete all redemption logs
+      // 4. Delete all redemption logs
       final logs = await db
           .collection('redemption_log')
           .where('family_id', isEqualTo: familyId)
@@ -1157,15 +1112,23 @@ class _DeleteAccountSheetState extends ConsumerState<_DeleteAccountSheet> {
         batch.delete(doc.reference);
       }
 
-      // 6. Delete family doc if it exists
+      // 5. Delete family doc
       batch.delete(db.collection('families').doc(familyId));
+
+      // 6. Delete all family members LAST so Firestore rules still
+      //    pass getUserFamilyId() for the deletes above
+      final members = await db
+          .collection('users')
+          .where('family_id', isEqualTo: familyId)
+          .get();
+      for (final doc in members.docs) {
+        batch.delete(doc.reference);
+      }
 
       await batch.commit();
 
       // 7. Delete Firebase Auth account last
       await FirebaseAuth.instance.currentUser?.delete();
-
-      // authProvider listener handles sign-out + routing automatically
     } on FirebaseAuthException catch (e) {
       setState(() => _error = e.message);
     } catch (e) {
@@ -1186,15 +1149,13 @@ class _DeleteAccountSheetState extends ConsumerState<_DeleteAccountSheet> {
             padding: const EdgeInsets.all(AppTheme.spacingM),
             decoration: BoxDecoration(
               color: AppTheme.statusRejected.withAlpha(20),
-              borderRadius:
-                  BorderRadius.circular(AppTheme.radiusMedium),
-              border: Border.all(
-                  color: AppTheme.statusRejected.withAlpha(80)),
+              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+              border:
+                  Border.all(color: AppTheme.statusRejected.withAlpha(80)),
             ),
             child: Text(
               '⚠️ This will permanently delete all family members, pets, tasks, rewards, and your account. This cannot be undone.',
-              style:
-                  AppTheme.body(color: AppTheme.statusRejected),
+              style: AppTheme.body(color: AppTheme.statusRejected),
             ),
           ),
           const SizedBox(height: AppTheme.spacingL),
@@ -1202,15 +1163,13 @@ class _DeleteAccountSheetState extends ConsumerState<_DeleteAccountSheet> {
           const SizedBox(height: AppTheme.spacingS),
           TextField(
             controller: _confirmController,
-            decoration:
-                AppTheme.textFieldDecoration(hint: 'DELETE'),
+            decoration: AppTheme.textFieldDecoration(hint: 'DELETE'),
             style: AppTheme.body(),
           ),
           if (_error != null) ...[
             const SizedBox(height: AppTheme.spacingS),
             Text(_error!,
-                style:
-                    AppTheme.caption(color: AppTheme.statusRejected)),
+                style: AppTheme.caption(color: AppTheme.statusRejected)),
           ],
           const SizedBox(height: AppTheme.spacingL),
           ElevatedButton(
@@ -1221,8 +1180,7 @@ class _DeleteAccountSheetState extends ConsumerState<_DeleteAccountSheet> {
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppTheme.statusRejected))
+                        strokeWidth: 2, color: AppTheme.statusRejected))
                 : Text('Delete Everything',
                     style: AppTheme.buttonText(
                         color: AppTheme.statusRejected)),
@@ -1304,8 +1262,7 @@ class _BottomSheetWrapper extends StatelessWidget {
 class _SheetSaveButton extends StatelessWidget {
   final bool isLoading;
   final VoidCallback onTap;
-  const _SheetSaveButton(
-      {required this.isLoading, required this.onTap});
+  const _SheetSaveButton({required this.isLoading, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
