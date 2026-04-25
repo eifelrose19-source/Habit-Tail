@@ -1,8 +1,10 @@
+// auth_provider.dart
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'user_provider.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+
 class AuthState {
   final User? user;
   final bool isLoading;
@@ -26,7 +28,7 @@ class AuthState {
       AuthState(
         user: clearUser ? null : (user ?? this.user),
         isLoading: isLoading ?? this.isLoading,
-        error: error, // We allow error to be null to clear old errors
+        error: error,
       );
 }
 
@@ -36,27 +38,26 @@ class AuthNotifier extends Notifier<AuthState> {
 
   @override
   AuthState build() {
-    // Listen to auth changes and update state
     _authStateSubscription = _auth.authStateChanges().listen((user) {
-      state = AuthState(
-        user: user,
-        isLoading: false,
-        error: null,
-      );
-      if (user != null) {
-        ref.read(userProvider.notifier).startListening(user.uid);
-      } else {
+      // ← Stop/start user listener BEFORE updating auth state
+      if (user == null) {
         ref.read(userProvider.notifier).stopListening();
+        state = const AuthState(user: null, isLoading: false);
+      } else {
+        state = AuthState(user: user, isLoading: false, error: null);
+        ref.read(userProvider.notifier).startListening(user.uid);
       }
     });
+
     ref.onDispose(() => _authStateSubscription?.cancel());
-      return const AuthState();
+    return const AuthState();
   }
 
   Future<void> signIn(String email, String password) async {
     try {
       state = state.copyWith(isLoading: true, error: null);
-      await _auth.signInWithEmailAndPassword(email: email, password: password);
+      await _auth.signInWithEmailAndPassword(
+          email: email, password: password);
     } on FirebaseAuthException catch (e) {
       state = state.copyWith(isLoading: false, error: e.message);
     }
@@ -65,7 +66,8 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> signUp(String email, String password) async {
     try {
       state = state.copyWith(isLoading: true, error: null);
-      await _auth.createUserWithEmailAndPassword(email: email, password: password);
+      await _auth.createUserWithEmailAndPassword(
+          email: email, password: password);
     } on FirebaseAuthException catch (e) {
       state = state.copyWith(isLoading: false, error: e.message);
     }
@@ -73,12 +75,17 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<void> signOut() async {
     try {
-      state = state.copyWith(isLoading: true, error: null);
+      // 1. Stop Firestore stream immediately — before anything else
+      ref.read(userProvider.notifier).stopListening();
+
+      // 2. Clear auth state immediately so router can react
+      state = const AuthState(user: null, isLoading: false);
+
+      // 3. Then do the actual Firebase sign-out in background
       try {
         await GoogleSignIn().signOut();
       } catch (_) {}
       await _auth.signOut();
-      state = AuthState(user: null, isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
@@ -92,7 +99,7 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-   Future<void> signInWithGoogle() async {
+  Future<void> signInWithGoogle() async {
     try {
       state = state.copyWith(isLoading: true, error: null);
       final GoogleSignIn googleSignIn = GoogleSignIn();
@@ -115,5 +122,6 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 }
+
 final authProvider =
     NotifierProvider<AuthNotifier, AuthState>(() => AuthNotifier());

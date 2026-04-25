@@ -1,8 +1,8 @@
+// user_provider.dart
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user_model.dart';
 import '../repositories/user_repository.dart';
-
 
 final userRepositoryProvider = Provider<UserRepository>(
   (ref) => UserRepository(),
@@ -40,6 +40,7 @@ class UserState {
 class UserNotifier extends Notifier<UserState> {
   late final UserRepository _repository;
   StreamSubscription<UserModel?>? _userSubscription;
+  bool _stopped = false; // ← guard flag
 
   @override
   UserState build() {
@@ -48,26 +49,27 @@ class UserNotifier extends Notifier<UserState> {
     return const UserState();
   }
 
-  /// Listens to the specific user document in the 'users' collection.
   void startListening(String userId) {
+    _stopped = false;
     state = state.copyWith(isLoading: true, error: null);
     _userSubscription?.cancel();
 
     _userSubscription = _repository.watchUser(userId).listen(
       (user) {
+        if (_stopped) return; // ← ignore events after stopListening
         if (user != null) {
           state = state.copyWith(user: user, isLoading: false);
         } else {
-          state = state.copyWith(clearUser: true, isLoading: false, error: 'User not found');
+          state = const UserState(isLoading: false, error: null);
         }
       },
       onError: (error) {
+        if (_stopped) return; // ← ignore stream close errors on sign-out
         state = state.copyWith(isLoading: false, error: error.toString());
       },
     );
   }
 
-  /// Updates user points (e.g., when a task is approved).
   Future<void> addPoints(String userId, int points) async {
     try {
       await _repository.addPoints(userId, points);
@@ -77,7 +79,6 @@ class UserNotifier extends Notifier<UserState> {
     }
   }
 
-  /// Deducts user points (e.g., when a reward is claimed).
   Future<void> subtractPoints(String userId, int points) async {
     try {
       await _repository.addPoints(userId, -points);
@@ -88,12 +89,12 @@ class UserNotifier extends Notifier<UserState> {
   }
 
   void stopListening() {
+    _stopped = true; // ← set flag first
     _userSubscription?.cancel();
     _userSubscription = null;
-    state = const UserState();
+    state = const UserState(); // isLoading: false, user: null
   }
 }
 
 final userProvider =
     NotifierProvider<UserNotifier, UserState>(() => UserNotifier());
-
