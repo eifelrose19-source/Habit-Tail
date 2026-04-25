@@ -21,9 +21,10 @@ class AuthState {
     User? user,
     bool? isLoading,
     String? error,
+    bool clearUser = false,
   }) =>
       AuthState(
-        user: user ?? this.user,
+        user: clearUser ? null : (user ?? this.user),
         isLoading: isLoading ?? this.isLoading,
         error: error, // We allow error to be null to clear old errors
       );
@@ -77,6 +78,7 @@ class AuthNotifier extends Notifier<AuthState> {
         await GoogleSignIn().signOut();
       } catch (_) {}
       await _auth.signOut();
+      state = AuthState(user: null, isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
