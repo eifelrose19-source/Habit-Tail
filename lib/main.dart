@@ -106,8 +106,8 @@ class RootRouter extends ConsumerWidget {
       return const SplashScreen();
     }
 
-    // ── 4. New user — no family yet → offer Create or Join ───────────────
-    if (user.needsFamilySetup) {
+    // ── 4. New user or unassigned — no family yet → offer Create or Join ──
+    if (user.needsFamilySetup || user.user?.role == 'unassigned') {
       print('→ CreateOrJoinScreen');
       return const CreateOrJoinScreen();
     }

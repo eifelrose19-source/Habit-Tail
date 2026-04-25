@@ -37,13 +37,20 @@ class AuthNotifier extends Notifier<AuthState> {
 
   @override
   AuthState build() {
-    _authStateSubscription = _auth.authStateChanges().listen((user) {
+    _authStateSubscription = _auth.authStateChanges().listen((user) async {
       if (user == null) {
         ref.read(userProvider.notifier).stopListening();
         state = const AuthState(user: null, isLoading: false);
       } else {
-        state = AuthState(user: user, isLoading: false, error: null);
-        ref.read(userProvider.notifier).startListening(user.uid);
+        try {
+          // Logic: Ensure DB record exists, then start the user stream
+          await ref.read(userRepositoryProvider).ensureUserExists(user);
+
+          state = AuthState(user: user, isLoading: false, error: null);
+          ref.read(userProvider.notifier).startListening(user.uid);
+        } catch (e) {
+          state = state.copyWith(isLoading: false, error: e.toString());
+        }
       }
     });
     ref.onDispose(() => _authStateSubscription?.cancel());

@@ -1,8 +1,27 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
 
 class UserRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  /// Ensures a user document exists in Firestore after social login
+  Future<void> ensureUserExists(User firebaseUser) async {
+    final doc = await _firestore.collection('users').doc(firebaseUser.uid).get();
+
+    if (!doc.exists) {
+      await _firestore.collection('users').doc(firebaseUser.uid).set({
+        'uid': firebaseUser.uid,
+        'family_id': '',
+        'display_name': firebaseUser.displayName ?? 'New Member',
+        'role': 'unassigned',
+        'claimed': true,
+        'total_points': 0,
+        'children_id': [],
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
+  }
 
   /// Live stream of a single user
   Stream<UserModel?> watchUser(String userId) {
@@ -12,8 +31,7 @@ class UserRepository {
         .snapshots()
         .map((snapshot) {
       if (!snapshot.exists) return null;
-      return UserModel.fromFirestore(
-        snapshot);
+      return UserModel.fromFirestore(snapshot);
     });
   }
 
@@ -60,66 +78,65 @@ class UserRepository {
     final snapshot = await _firestore
         .collection('users')
         .where('family_id', isEqualTo: familyId)
-        .where('role', isEqualTo: 'child') 
+        .where('role', isEqualTo: 'child')
         .get();
     return snapshot.docs
-        .map((doc) => UserModel.fromFirestore(doc as DocumentSnapshot<Map<String, dynamic>>))
+        .map((doc) => UserModel.fromFirestore(
+            doc as DocumentSnapshot<Map<String, dynamic>>))
         .toList();
   }
 
   /// Fetches unclaimed slots for a given family code, used in WhoAreYouScreen
   Future<List<UserModel>> fetchAvailableSlots(String familyId) async {
     final snapshot = await _firestore
-    .collection('users')
-    .where('family_id', isEqualTo: familyId)
-    .where('claimed', isEqualTo: false)
-    .get();
-  return snapshot.docs
-    .map((doc) =>
-      UserModel.fromFirestore(doc as DocumentSnapshot<Map<String, dynamic>>))
-    .toList();
+        .collection('users')
+        .where('family_id', isEqualTo: familyId)
+        .where('claimed', isEqualTo: false)
+        .get();
+    return snapshot.docs
+        .map((doc) => UserModel.fromFirestore(
+            doc as DocumentSnapshot<Map<String, dynamic>>))
+        .toList();
   }
 
   /// Batch-Writes the creators own doc + all member slots
-  /// Called by AuthProvider when a user sets up a new family
-  Future<void> setupFamily(
-    String creatorId, UserModel creatorDoc, List<UserModel> memberSlots) async {
-      final batch = _firestore.batch();
+  Future<void> setupFamily(String creatorId, UserModel creatorDoc,
+      List<UserModel> memberSlots) async {
+    final batch = _firestore.batch();
 
-  /// Write the creators own doc when claimed: true
-  final creatorRef = _firestore.collection('users').doc(creatorId);
-  batch.set(creatorRef, creatorDoc.toFirestore(), SetOptions(merge: true));
-  /// Write each seeded slot as a new auto-ID doc with claimed: false
-  for (final slot in memberSlots) {
-    final slotRef = _firestore.collection('users').doc();
-    batch.set(slotRef, slot.toFirestore());
+    final creatorRef = _firestore.collection('users').doc(creatorId);
+    batch.set(creatorRef, creatorDoc.toFirestore(), SetOptions(merge: true));
+
+    for (final slot in memberSlots) {
+      final slotRef = _firestore.collection('users').doc();
+      batch.set(slotRef, slot.toFirestore());
+    }
+    await batch.commit();
   }
-  await batch.commit();
-}
 
-/// Claims a slot for a joining user
-/// Sets the uid and flips claimed: true atomically
-Future<void> claimSlot(String slotDocId, String uid) async {
-  await _firestore.collection('users').doc(slotDocId).update({
-    'uid': uid,
-    'claimed': true,
-  });
-}
-///Finds claimed parent doc to verify Parental PIN
-///Used during WhoAreYou when parent role is selected
-Future<bool> verifyParentalPin(String familyId, String enteredPin) async {
-  final snapshot = await _firestore
-  .collection('users')
-  .where('family_id', isEqualTo: familyId)
-  .where('role', isEqualTo: 'parent')
-  .where('claimed', isEqualTo: true)
-  .limit(1)
-  .get();
+  /// Claims a slot for a joining user
+  Future<void> claimSlot(String slotDocId, String uid) async {
+    await _firestore.collection('users').doc(slotDocId).update({
+      'uid': uid,
+      'claimed': true,
+    });
+  }
 
-  if (snapshot.docs.isEmpty) return false;
-  final storedPin = snapshot.docs.first.data()['parentalPin'] as String?;
-  return storedPin == enteredPin; 
-}
+  /// Finds claimed parent doc to verify Parental PIN
+  Future<bool> verifyParentalPin(String familyId, String enteredPin) async {
+    final snapshot = await _firestore
+        .collection('users')
+        .where('family_id', isEqualTo: familyId)
+        .where('role', isEqualTo: 'parent')
+        .where('claimed', isEqualTo: true)
+        .limit(1)
+        .get();
+
+    if (snapshot.docs.isEmpty) return false;
+    final storedPin = snapshot.docs.first.data()['parentalPin'] as String?;
+    return storedPin == enteredPin;
+  }
+
   /// Deletes a user document
   Future<void> deleteUser(String userId) async {
     await _firestore.collection('users').doc(userId).delete();
