@@ -73,18 +73,6 @@ class HabitTailApp extends StatelessWidget {
   }
 }
 
-/// Single source of truth for navigation.
-///
-/// Flow:
-///   Not authed          → SplashScreen (while loading) / LoginScreen
-///   Authed, no family   → CreateOrJoinScreen
-///     └─ Create family  → ManageFamilyScreen (family code + pin setup handled inside)
-///     └─ Join family    → JoinFamilyScreen → WhoAreYouScreen
-///   Authed, has family,
-///     not yet claimed   → WhoAreYouScreen
-///   Fully onboarded
-///     parent            → ParentDashboardScreen
-///     child             → ChildDashboardScreen
 class RootRouter extends ConsumerWidget {
   const RootRouter({super.key});
 
@@ -93,31 +81,42 @@ class RootRouter extends ConsumerWidget {
     final auth = ref.watch(authProvider);
     final user = ref.watch(userProvider);
 
+    // TEMP DEBUG
+    print('=== RootRouter ===');
+    print('auth.isLoading: ${auth.isLoading}');
+    print('auth.isAuthenticated: ${auth.isAuthenticated}');
+    print('user.isLoading: ${user.isLoading}');
+    print('user.user: ${user.user}');
+
     // ── 1. Auth still initialising on cold start ──────────────────────────
     if (auth.isLoading) {
+      print('→ SplashScreen (auth loading)');
       return const SplashScreen();
     }
 
     // ── 2. Not logged in ──────────────────────────────────────────────────
     if (!auth.isAuthenticated) {
+      print('→ LoginScreen');
       return const LoginScreen();
     }
 
     // ── 3. Logged in but Firestore doc still loading ──────────────────────
     if (user.isLoading || user.user == null) {
+      print('→ SplashScreen (user loading/null)');
       return const SplashScreen();
     }
 
     // ── 4. New user — no family yet → offer Create or Join ───────────────
     if (user.needsFamilySetup) {
+      print('→ CreateOrJoinScreen');
       return const CreateOrJoinScreen();
     }
 
     // ── 5. Has a familyId but hasn't claimed a slot → WhoAreYou ──────────
     if (!user.isClaimed) {
       final familyId = user.user?.familyId ?? '';
+      print('→ WhoAreYouScreen (familyId: $familyId)');
 
-      // Shouldn't happen, but guard against empty familyId
       if (familyId.isEmpty) return const CreateOrJoinScreen();
 
       final slotsAsync = ref.watch(availableSlotsProvider(familyId));
@@ -134,8 +133,10 @@ class RootRouter extends ConsumerWidget {
 
     // ── 6. Fully onboarded — route by role ───────────────────────────────
     if (user.isParent) {
+      print('→ ParentDashboardScreen');
       return const ParentDashboardScreen();
     }
+    print('→ ChildDashboardScreen');
     return const ChildDashboardScreen();
   }
 }

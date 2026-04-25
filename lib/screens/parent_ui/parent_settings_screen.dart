@@ -1242,7 +1242,10 @@ class _SignOutButton extends ConsumerWidget {
     return ElevatedButton(
       onPressed: isLoading
           ? null
-          : () => ref.read(authProvider.notifier).signOut(),
+          : () async {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+              await ref.read(authProvider.notifier).signOut();
+            },
       style: AppTheme.destructiveButtonStyle,
       child: isLoading
           ? const SizedBox(
