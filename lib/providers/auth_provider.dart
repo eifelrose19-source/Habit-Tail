@@ -48,7 +48,7 @@ class AuthNotifier extends Notifier<AuthState> {
         ref.read(userProvider.notifier).stopListening();
       }
     });
-    ref.ondispose(() => _authStateSubscription?.cancel());
+    ref.onDispose(() => _authStateSubscription?.cancel());
       return const AuthState();
   }
 
