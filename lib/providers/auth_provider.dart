@@ -73,8 +73,10 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> signOut() async {
     try {
       state = state.copyWith(isLoading: true, error: null);
+      try {
+        await GoogleSignIn().signOut();
+      } catch (_) {}
       await _auth.signOut();
-      await GoogleSignIn().signOut();
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
