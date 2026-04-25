@@ -58,7 +58,7 @@ class UserNotifier extends Notifier<UserState> {
         if (user != null) {
           state = state.copyWith(user: user, isLoading: false);
         } else {
-          state = state.copyWith(isLoading: false, error: 'User not found');
+          state = state.copyWith(isLoading: true, error: 'User not found');
         }
       },
       onError: (error) {
