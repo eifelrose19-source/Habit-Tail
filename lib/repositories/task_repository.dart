@@ -4,10 +4,11 @@ import '../models/task_model.dart';
 class TaskRepository {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  Stream<List<TaskModel>> watchTasks(String familyId) {
+  Stream<List<TaskModel>> watchTasks(String familyId, String petId) {
     return _db
         .collection('tasks')
         .where('family_id', isEqualTo: familyId)
+        .where('pet_id', isEqualTo: petId)
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => TaskModel.fromFirestore(doc))
@@ -73,9 +74,10 @@ class TaskRepository {
     });
   }
 
-  Future<void> deleteTasksByPet(String petId) async {
+  Future<void> deleteTasksByPet(String petId, String familyId,) async {
     final snapshot = await _db
         .collection('tasks')
+        .where('family_id', isEqualTo: familyId)
         .where('pet_id', isEqualTo: petId)
         .get();
     final batch = _db.batch();
