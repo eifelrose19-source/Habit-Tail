@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
-import '../../main.dart';
-import 'signup_screen.dart';
-import 'forgot_password_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -20,11 +17,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _isLoading = true);
     try {
       await ref.read(authProvider.notifier).signInWithGoogle();
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => RootRouter()),
-        );
-      }
+      // RootRouter handles navigation automatically via authProvider
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -51,75 +44,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         decoration: AppTheme.backgroundGradient,
         child: SafeArea(
           child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: AppTheme.spacingXL),
+            padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXL),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const SizedBox(height: AppTheme.spacingXXL),
-
-                // Title
-                Text('Log In', style: AppTheme.h2()),
-
-                const SizedBox(height: AppTheme.spacingL),
-
-                // Logo
-                Center(
-                  child: Image.asset(
-                    'assets/images/icons/hbtletters.png',
-                    width: screenWidth * 0.65,
-                    fit: BoxFit.contain,
-                  ),
+                Text('Welcome to HabitTail', style: AppTheme.h2()),
+                const Spacer(flex: 2),
+                Image.asset(
+                  'assets/images/icons/hbtletters.png',
+                  width: screenWidth * 0.65,
+                  fit: BoxFit.contain,
                 ),
-
-                const SizedBox(height: AppTheme.spacingXXL),
-
-                // Google Sign In button
+                const Spacer(flex: 2),
                 _isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                              AppTheme.electricSky),
-                        ),
+                    ? const CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                            AppTheme.electricSky),
                       )
                     : _GoogleSignInButton(onTap: _signInWithGoogle),
-
-                const SizedBox(height: AppTheme.spacingL),
-
-                // Forgot password link
-                Center(
-                  child: GestureDetector(
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                          builder: (_) => const ForgotPasswordScreen()),
-                    ),
-                    child:
-                        Text('Forgot Password?', style: AppTheme.linkText()),
-                  ),
-                ),
-
-                const SizedBox(height: AppTheme.spacingL),
-
-                // Sign up link
-                Center(
-                  child: GestureDetector(
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const SignupScreen()),
-                    ),
-                    child: RichText(
-                      text: TextSpan(
-                        text: "Don't have an account? ",
-                        style: AppTheme.caption(),
-                        children: [
-                          TextSpan(
-                            text: 'Sign Up',
-                            style: AppTheme.linkText(),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                const SizedBox(height: AppTheme.spacingXXL),
               ],
             ),
           ),
@@ -158,7 +102,7 @@ class _GoogleSignInButton extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppTheme.spacingM),
-            Text('Log in with Google', style: AppTheme.buttonText()),
+            Text('Continue with Google', style: AppTheme.buttonText()),
           ],
         ),
       ),
