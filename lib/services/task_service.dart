@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/task_model.dart';
 import '../repositories/task_repository.dart';
+
 class TaskService {
   final TaskRepository _repository = TaskRepository();
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -8,9 +9,9 @@ class TaskService {
   static const int _minPointsPerTask = 1;
   static const int _maxPointsPerTask = 100;
 
-  /// Streams all tasks for a family — used by parent dashboard
-  Stream<List<TaskModel>> watchFamilyTasks(String familyId) {
-    return _repository.watchTasks(familyId);
+  /// Streams tasks for a family and pet — updated to match repository
+  Stream<List<TaskModel>> watchFamilyTasks(String familyId, String petId) {
+    return _repository.watchTasks(familyId, petId);
   }
 
   /// Streams tasks for a specific child — used by child dashboard
@@ -53,7 +54,6 @@ class TaskService {
   }
 
   /// Parent approves task — status → completed, stamps last_completed
-  /// Points are awarded here via userProvider in the provider layer
   Future<void> approveTask(String taskId) async {
     await _repository.approveTask(taskId);
   }
@@ -63,8 +63,8 @@ class TaskService {
     await _repository.rejectTask(taskId);
   }
 
-  /// Deletes all tasks linked to a pet — called when pet is deleted
-  Future<void> deleteTasksByPet(String petId) async {
-    await _repository.deleteTasksByPet(petId);
+  /// Deletes all tasks linked to a pet — updated to pass familyId for security
+  Future<void> deleteTasksByPet(String familyId, String petId) async {
+    await _repository.deleteTasksByPet(familyId, petId);
   }
 }
