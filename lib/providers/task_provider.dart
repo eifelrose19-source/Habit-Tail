@@ -6,11 +6,12 @@ import 'user_provider.dart';
 
 final taskServiceProvider = Provider<TaskService>((ref) => TaskService());
 
-// All family tasks — used by parent dashboard
-final familyTasksProvider = StreamProvider<List<TaskModel>>((ref) {
+// Updated to .family to accept petId, and passes both IDs to the service
+final familyTasksProvider = StreamProvider.family<List<TaskModel>, String>((ref, petId) {
   final familyId = ref.watch(userProvider).user?.familyId ?? '';
   if (familyId.isEmpty) return const Stream.empty();
-  return ref.read(taskServiceProvider).watchFamilyTasks(familyId);
+  // Now matches the new TaskService.watchFamilyTasks(familyId, petId)
+  return ref.read(taskServiceProvider).watchFamilyTasks(familyId, petId);
 });
 
 // Tasks for a specific child — used by child dashboard
