@@ -561,7 +561,8 @@ class _TaskList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tasksAsync = ref.watch(familyTasksProvider);
+    final familyId = ref.read(userProvider).user?.familyId ?? '';
+    final tasksAsync = ref.watch(familyTasksProvider(familyId));
     final petsAsync = ref.watch(familyPetsProvider);
     final membersAsync = ref.watch(familyMembersProvider);
     final sortOption = ref.watch(_taskSortProvider);

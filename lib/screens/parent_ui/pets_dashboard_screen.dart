@@ -324,10 +324,14 @@ class _SelectedPetTaskSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedPet = ref.watch(_selectedPetProvider);
-    final tasksAsync = ref.watch(familyTasksProvider);
-    final membersAsync = ref.watch(familyMembersProvider);
 
     if (selectedPet == null) return const SizedBox.shrink();
+
+    final familyId = ref.read(userProvider).user?.familyId ?? '';
+    final tasksAsync = ref.watch(familyTasksProvider(familyId));
+    final membersAsync = ref.watch(familyMembersProvider);
+
+    
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
