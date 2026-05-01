@@ -6,6 +6,7 @@ import '../../providers/user_provider.dart';
 import '../../providers/family_provider.dart';
 import '../../models/user_model.dart';
 import '../parent_ui/parent_settings_screen.dart';
+import '../auth_flow/manage_family_screen.dart';
 
 class FamilyDashboardScreen extends ConsumerWidget {
   const FamilyDashboardScreen({super.key});
@@ -14,11 +15,12 @@ class FamilyDashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final userState = ref.watch(userProvider);
     final userName = userState.user?.name ?? 'Parent';
+    final familyCode = userState.user?.familyId ?? ''; // ← added
 
     return AppTheme.familyScreenWrapper(
       child: Column(
         children: [
-          _FamilyAppBar(userName: userName),
+          _FamilyAppBar(userName: userName, familyCode: familyCode), // ← passed
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXL),
@@ -46,7 +48,8 @@ class FamilyDashboardScreen extends ConsumerWidget {
 
 class _FamilyAppBar extends StatelessWidget {
   final String userName;
-  const _FamilyAppBar({required this.userName});
+  final String familyCode; // ← added
+  const _FamilyAppBar({required this.userName, required this.familyCode}); // ← added
 
   @override
   Widget build(BuildContext context) {
@@ -76,20 +79,42 @@ class _FamilyAppBar extends StatelessWidget {
             textAlign: TextAlign.center,
             style: AppTheme.h2(color: AppTheme.surface),
           ),
-          GestureDetector(
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ParentSettingsScreen()),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.settings_outlined,
-                    color: AppTheme.surface, size: 24),
-                const SizedBox(height: 2),
-                Text('Settings', style: AppTheme.caption(color: AppTheme.surface)),
-              ],
-            ),
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ManageFamilyScreen(familyCode: familyCode), // ← passed
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.manage_accounts_outlined,
+                        color: AppTheme.surface, size: 24),
+                    const SizedBox(height: 2),
+                    Text('Manage', style: AppTheme.caption(color: AppTheme.surface)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppTheme.spacingM),
+              GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ParentSettingsScreen()),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.settings_outlined,
+                        color: AppTheme.surface, size: 24),
+                    const SizedBox(height: 2),
+                    Text('Settings', style: AppTheme.caption(color: AppTheme.surface)),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -122,8 +147,7 @@ class _FamilyMembersSection extends ConsumerWidget {
             ),
             data: (members) {
               if (members.isEmpty) {
-                return Text('No family members yet.',
-                    style: AppTheme.body());
+                return Text('No family members yet.', style: AppTheme.body());
               }
               return SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -246,7 +270,7 @@ class _MemberOptionsSheetState extends ConsumerState<_MemberOptionsSheet> {
   }
 
   Future<void> _deleteMember() async {
-    Navigator.pop(context); // close sheet first
+    Navigator.pop(context);
     await ref
         .read(familyProvider.notifier)
         .removeMember(widget.member);
@@ -267,7 +291,6 @@ class _MemberOptionsSheetState extends ConsumerState<_MemberOptionsSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Handle bar
           Center(
             child: Container(
               width: 40,
@@ -279,16 +302,12 @@ class _MemberOptionsSheetState extends ConsumerState<_MemberOptionsSheet> {
             ),
           ),
           const SizedBox(height: AppTheme.spacingL),
-
-          // Member name heading
           Text(widget.member.name, style: AppTheme.h2()),
           Text(
             widget.member.isParent ? 'Parent' : 'Child',
             style: AppTheme.caption(color: AppTheme.midnightPlum),
           ),
           const SizedBox(height: AppTheme.spacingXL),
-
-          // Edit name field (shown when editing)
           if (_isEditing) ...[
             TextField(
               controller: _nameController,
@@ -326,15 +345,12 @@ class _MemberOptionsSheetState extends ConsumerState<_MemberOptionsSheet> {
               ],
             ),
           ] else ...[
-            // Edit name option
             _SheetOption(
               icon: Icons.edit_outlined,
               label: 'Edit Name',
               onTap: () => setState(() => _isEditing = true),
             ),
             const SizedBox(height: AppTheme.spacingS),
-
-            // Delete option
             _SheetOption(
               icon: Icons.delete_outline,
               label: 'Delete Profile',
