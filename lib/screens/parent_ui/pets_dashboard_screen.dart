@@ -65,8 +65,14 @@ class PetsDashboardScreen extends ConsumerWidget {
     // Auto-select first pet when pets load and none selected
     ref.listen(familyPetsProvider, (_, next) {
       next.whenData((pets) {
-        if (pets.isNotEmpty && ref.read(_selectedPetProvider) == null) {
+        final selected = ref.read(_selectedPetProvider);
+        if (selected ==null && pets.isNotEmpty) {
           ref.read(_selectedPetProvider.notifier).set(pets.first);
+        }
+        if (selected !=null && pets.any((p) => p.petId == selected.petId)) {
+          ref.read(_selectedPetProvider.notifier).set(
+            pets.isNotEmpty ? pets.first : null,
+          );
         }
       });
     });
@@ -822,12 +828,12 @@ class _EditPetSheetState extends ConsumerState<_EditPetSheet> {
   }
 
   Future<void> _delete() async {
-    await ref.read(petProvider.notifier).deletePet(widget.pet.petId);
-    if (mounted) {
-      ref.read(_selectedPetProvider.notifier).set(null);
-      Navigator.pop(context);
-    }
-  }
+   ref.read(_selectedPetProvider.notifier).set(null);
+   await ref.read(petProvider.notifier).deletePet(widget.pet.petId);
+
+   if (mounted) Navigator.pop(context);
+  } 
+   
 
   @override
   Widget build(BuildContext context) {
